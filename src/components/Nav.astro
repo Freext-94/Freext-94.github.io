@@ -7,19 +7,20 @@ interface Props {
 }
 
 const { profile } = Astro.props;
+const home = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
 const links = [
-  { href: '#about', label: '关于' },
-  { href: '#skills', label: '技能' },
-  { href: '#projects', label: '项目' },
-  { href: '#experience', label: '经历' },
-  { href: '#contact', label: '联系' },
+  { href: `${home}#about`, label: '关于' },
+  { href: `${home}#skills`, label: '技能' },
+  { href: `${home}#projects`, label: '项目' },
+  { href: `${home}#experience`, label: '经历' },
+  { href: `${home}#contact`, label: '联系' },
 ];
 ---
 
 <header class="nav">
   <div class="shell inner">
-    <a class="logo" href="#top" aria-label={`${profile.name} 首页`}>
+    <a class="logo" href={`${home}#top`} aria-label={`${profile.name} 首页`}>
       <span class="mark" aria-hidden="true">{profile.initials}</span>
       <span class="who">{profile.name}</span>
     </a>

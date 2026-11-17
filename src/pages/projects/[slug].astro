@@ -1,0 +1,130 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getPortfolio } from '@/lib/notion';
+
+export async function getStaticPaths() {
+  const { profile, projects } = await getPortfolio();
+  return projects
+    .filter((project) => project.slug?.trim())
+    .map((project) => ({
+      params: { slug: project.slug!.trim() },
+      props: { profile, project },
+    }));
+}
+
+const { profile, project } = Astro.props;
+const title = `${project.name} · ${profile.name} 的项目`;
+const description = project.summary || `${project.name} 项目介绍。`;
+const home = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+---
+
+<Base profile={profile} title={title} description={description}>
+  <article class="shell detail">
+    <a class="back" href={`${home}#projects`}>← 返回项目列表</a>
+
+    <header class="intro">
+      <div class="meta">
+        {project.category && <span class="pill pill-brand">{project.category}</span>}
+        {project.status && <span class="pill">{project.status}</span>}
+        {project.featured && <span class="pill">精选项目</span>}
+      </div>
+      <h1>{project.name}</h1>
+      {project.summary && <p class="summary">{project.summary}</p>}
+    </header>
+
+    {
+      project.image && (
+        <div class="cover card">
+          <img src={project.image} alt={`${project.name} 项目封面`} fetchpriority="high" />
+        </div>
+      )
+    }
+
+    {
+      project.stack.length > 0 && (
+        <section class="content-block" aria-labelledby="stack-title">
+          <h2 id="stack-title">技术与工具</h2>
+          <ul class="pills">
+            {project.stack.map((item) => <li class="pill">{item}</li>)}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      (project.demo || project.repo) && (
+        <nav class="actions" aria-label="项目链接">
+          {project.demo && <a class="btn btn-primary" href={project.demo} target="_blank" rel="noopener noreferrer">查看演示</a>}
+          {project.repo && <a class="btn btn-ghost" href={project.repo} target="_blank" rel="noopener noreferrer">查看源码</a>}
+        </nav>
+      )
+    }
+  </article>
+</Base>
+
+<style>
+  .detail {
+    padding-block: clamp(2rem, 6vw, 5rem);
+  }
+
+  .back {
+    display: inline-block;
+    margin-block-end: clamp(2rem, 5vw, 3.5rem);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .intro {
+    max-inline-size: 54rem;
+  }
+
+  .meta,
+  .actions,
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .intro h1 {
+    margin-block: 1rem 0.75rem;
+    font-size: clamp(2rem, 6vw, 4rem);
+    line-height: 1.12;
+    letter-spacing: -0.045em;
+  }
+
+  .summary {
+    max-inline-size: 46rem;
+    color: var(--text-muted);
+    font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+  }
+
+  .cover {
+    overflow: hidden;
+    margin-block: clamp(2rem, 5vw, 3.5rem);
+    background: var(--surface);
+  }
+
+  .cover img {
+    inline-size: 100%;
+    max-block-size: 38rem;
+    object-fit: cover;
+  }
+
+  .content-block {
+    margin-block: 2rem;
+  }
+
+  .content-block h2 {
+    margin-block-end: 0.8rem;
+    font-size: 1rem;
+  }
+
+  .pills {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+</style>
