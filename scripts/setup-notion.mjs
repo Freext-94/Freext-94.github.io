@@ -13,14 +13,20 @@
  * 重复执行 create 会再建一套同名数据库，不要当成同步命令用。
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import dns from 'node:dns';
 // 该包只有 CJS 产物，Node 下必须走 default 再解构（Vite 里不需要）
 import notion from '@notionhq/client';
 import { COLLECTIONS, toNotionPropertySchema } from '../src/lib/schema.ts';
 
 const { Client, extractNotionId, isNotionClientError } = notion;
 
+// 本机 DNS 会返回 AAAA 和一个不可达的 A 记录，IPv4 优先能少撞超时
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch {}
+
 const ENV_FILE = '.env.local';
-const ORDER = ['projects', 'skills', 'experience', 'links'];
+const ORDER = ['profile', 'projects', 'skills', 'experience', 'articles'];
 
 loadDotEnv();
 
@@ -134,17 +140,25 @@ async function commandCreate(target, shouldWrite) {
   console.log('\n去 Notion 里填几行内容，然后 npm run dev 就能看到真实数据。');
 }
 
-/** 与 src/lib/notion.ts 保持一致：填数据源 ID 或数据库 ID 都能解析 */
+/**
+ * 与 src/lib/notion.ts 保持一致：填数据源 ID 或数据库 ID 都能解析。
+ * 只在确实「找不到」时才当数据库 ID 处理，网络故障要原样抛出。
+ */
+function isObjectNotFound(error) {
+  return isNotionClientError(error) && error.code === 'object_not_found';
+}
+
 async function resolveDataSourceId(client, id) {
   try {
     await client.dataSources.retrieve({ data_source_id: id });
     return id;
-  } catch {
-    const database = await client.databases.retrieve({ database_id: id });
-    const [first] = database.data_sources ?? [];
-    if (!first) throw new Error('数据库下没有可用的数据源');
-    return first.id;
+  } catch (error) {
+    if (!isObjectNotFound(error)) throw error;
   }
+  const database = await client.databases.retrieve({ database_id: id });
+  const [first] = database.data_sources ?? [];
+  if (!first) throw new Error('数据库下没有可用的数据源');
+  return first.id;
 }
 
 async function commandCheck() {

@@ -29,10 +29,11 @@ jobs:
         env:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           # 数据库 ID 不算机密，建议放在 Settings → Secrets and variables → Actions → Variables
+          NOTION_PROFILE_ID: ${{ vars.NOTION_PROFILE_ID }}
           NOTION_PROJECTS_ID: ${{ vars.NOTION_PROJECTS_ID }}
           NOTION_SKILLS_ID: ${{ vars.NOTION_SKILLS_ID }}
           NOTION_EXPERIENCE_ID: ${{ vars.NOTION_EXPERIENCE_ID }}
-          NOTION_LINKS_ID: ${{ vars.NOTION_LINKS_ID }}
+          NOTION_ARTICLES_ID: ${{ vars.NOTION_ARTICLES_ID }}
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

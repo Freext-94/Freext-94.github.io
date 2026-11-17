@@ -1,11 +1,14 @@
 # 个人主页 · 作品集
 
-Astro 静态站 + Notion 作为内容后台 + 图床存图。改内容只用打开 Notion，不用碰代码。
+Astro 静态站 + Notion 作为内容后台。改内容只用打开 Notion，不用碰代码。
 
 - **框架**：Astro 7（纯静态输出，产物就是几个 HTML/CSS/JS 文件）
 - **内容源**：Notion Internal Integration API，构建时拉取
-- **图片**：Notion 里用 URL 属性存图床直链，站点不搬运图片
+- **图片**：Notion 里用 URL 类型字段存图床直链，站点不搬运图片
 - **部署**：GitHub Pages + GitHub Actions
+
+页面区块：首屏 → 关于我 → 技能 → 项目 → 经历（含教育背景）→ 文章 → 联系。
+除首屏文案外，全部内容来自 Notion。
 
 ---
 
@@ -17,13 +20,11 @@ Node.js **≥ 22.23.4**（Astro 7 的硬性要求）。先确认：
 node -v
 ```
 
-版本不够的话，Windows 下用 winget 装：
+版本不够的话，Windows 下用 winget 装，装完要重开终端：
 
 ```bash
 winget install --id OpenJS.NodeJS.22 --exact
 ```
-
-装完要重开终端才会生效。
 
 ---
 
@@ -31,12 +32,13 @@ winget install --id OpenJS.NodeJS.22 --exact
 
 ```bash
 npm install
-cp .env.example .env.local   # 填入 Notion 凭证，见下一节
-npm run dev                  # http://localhost:4321/portfolio-homepage
+cp .env.example .env.local     # 填 token 和五个数据源 ID
+npm run notion:setup -- --check   # 验证能不能读到
+npm run dev                    # http://localhost:4321/portfolio-homepage
 ```
 
-**没有 Notion 凭证也能跑**：缺配置时站点会用 `src/data/fixtures.ts` 里的示例数据，
-开发时页面顶部有一条提示横幅（这条横幅不会出现在生产构建里）。
+**没配凭证也能跑**：缺配置时站点会用 `src/data/fixtures.ts` 里的占位数据，
+开发页面顶部有一条提示横幅（这条横幅不会出现在生产构建里）。
 
 ---
 
@@ -44,79 +46,106 @@ npm run dev                  # http://localhost:4321/portfolio-homepage
 
 ### 1. 创建集成
 
-打开 <https://www.notion.so/my-integrations> → **New integration** →
-Capabilities 勾上 `read` 和 `insert`（要让脚本建库就必须开 insert）→
-复制 **Internal Integration Secret** 到 `.env.local` 的 `NOTION_API_KEY`。
+<https://www.notion.so/my-integrations> → **New integration** →
+Capabilities 至少勾上读取内容 → 复制 **Internal Integration Secret** 填进
+`.env.local` 的 `NOTION_API_KEY`。
 
-### 2. 授权父页面
+### 2. 把五个库授权给这个集成
 
-在 Notion 里新建一个页面（比如叫「个人主页」），打开它 → 右上角 **•••** →
-**Connections** → **View other connections** → 选中刚创建的集成。
+对 Profile / Projects / Skills / Experience / Articles 每个库：
+页面右上角 **•••** → **Connections** → 选中刚创建的集成。
 
-> 只授权父页面就够了，脚本在这个页面下建的四个库会自动继承权限。
+> 如果这五个库都挂在同一个父页面下，只授权父页面即可，子库会继承权限。
 
-### 3. 一键建库
+### 3. 填数据源 ID
 
-```bash
-npm run notion:setup -- https://www.notion.so/你的页面-xxxxxxxx --write
+在 Notion 里打开某个库 → **•••** → **Copy link**，把链接整段粘进 `.env.local`：
+
+```
+NOTION_PROFILE_ID=https://www.notion.so/Profile-41ac81d5c69b809ab37b000b829571ed
 ```
 
-`--write` 会把四个数据源 ID 直接写进 `.env.local`。不想自动写文件就去掉这个参数，
-脚本会把 ID 打印出来让你自己粘。
+链接和裸 ID 都认（会自动解析）。也可以直接填数据源 ID。
 
-字段名很多，**建议用脚本建库而不是手动搭**，手动搭很容易漏字段导致内容显示不出来。
-
-建好后随时可以校验配置：
+### 4. 验证
 
 ```bash
 npm run notion:setup -- --check
 ```
 
-### 4. 填内容
+输出形如 `✓ Projects：4 行（…）`，并且会点名任何**代码期望有、但库里没有**的字段。
+改完 Notion 字段名后跑一次这个命令，是最快的排错方式。
 
-四个库分别是：
+---
 
-| 库 | 用途 | 页面区块 |
+## Notion 数据结构
+
+字段名在 [src/lib/schema.ts](file:///F:/appwin/Ai%20agent/src/lib/schema.ts) 里集中定义，
+读取器和校验脚本共用同一份，改一处即可。
+
+### Profile（取第一行）
+
+| 字段 | 类型 | 用途 |
 | --- | --- | --- |
-| 🚀 作品集 | 项目卡片 | `#projects` |
-| 🛠️ 技能栈 | 分类进度条 | `#skills` |
-| 📈 经历 | 时间线 | `#experience` |
-| ✉️ 联系方式 | 社交链接 | `#contact` |
+| 姓名 | 文本 | 首屏大字、标题、页脚 |
+| 职业定位 | 文本 | 首屏副标题、关于我导语、SEO 标题 |
+| 个人简介 | 文本 | 关于我段落；空行分段，首段同时用作 meta description |
+| 所在城市 | 地点 | 首屏定位标签，会自动去掉「中国大陆」等国别前缀 |
+| 联系邮箱 | Email | 联系区邮箱按钮 |
+| GitHub | URL | 导航栏按钮 + 联系区 |
+| 头像 | URL | 首屏圆形头像；留空则用姓名首字生成渐变徽标 |
+| 学历 / 毕业院校 / 毕业年份 | 单选 / 文本 / 数字 | 经历区底部的「教育背景」信息条，任一留空则自动省略 |
+| 资料名称 | 标题 | 备用姓名（「姓名」为空时兜底） |
 
-字段说明：
+### Projects
 
-**作品集**
-
-| 字段 | 类型 | 说明 |
+| 字段 | 类型 | 用途 |
 | --- | --- | --- |
-| 作品名称 | 标题 | 卡片主标题 |
-| 一句话简介 | 文本 | 卡片副文案 |
-| 项目说明 | 文本 | 多行文本，每行渲染成一条要点 |
-| 标签 / 技术栈 | 多选 | 卡片底部的小胶囊 |
-| 封面图 | URL | **填图床直链**；留空则用页面封面，再留空就显示首字渐变图 |
-| 在线地址 / 源码地址 | URL | 卡片按钮，任一留空则不渲染对应按钮 |
-| 时间 / 我的角色 | 文本 | 角标与署名 |
-| 首页展示 | 复选 | 勾选后卡片带「精选」标；第一行勾上会占据整行大图版式 |
-| 排序 | 数字 | 升序。**留空全部为 0，顺序由 Notion 返回结果决定**，建议认真填 |
+| 项目名称 | 标题 | 卡片标题。**为空该行会被跳过**，可当草稿占位行用 |
+| 摘要 | 文本 | 卡片正文 |
+| 分类 | 单选 | 标题上方的彩色小标 |
+| 技术栈 | 多选 | 卡片底部胶囊 |
+| 封面图片 | URL | 图床直链；留空则回退到页面封面，再留空则用项目首字生成渐变底图 |
+| 演示地址 / GitHub | URL | 卡片按钮，任一留空则不渲染对应按钮 |
+| 发布状态 | Status | 原样显示为封面右上角徽章，不做过滤 |
+| 精选项目 | 复选 | 封面左上角「精选」标；**排序后的第一条**若是精选会占据整行大图版式 |
+| 排序 | 数字 | 升序。全部留空时按 Notion 返回顺序，建议认真填 |
+| Slug | 文本 | 已读取但当前未使用（详情页路由未做） |
 
-**技能栈**：技能名称（标题）、分类（单选，决定分组）、熟练度（百分比数字，
-`0.9` 和 `90` 两种写法都认）、补充说明（鼠标悬停 title）、图标（单选 emoji）、排序。
+### Skills
 
-**经历**：职位（标题）、单位、时间、地点、工作内容（多行文本，每行一条）、
-进行中（复选，时间线节点会呼吸发光）、类型（单选）、排序（数字越大越靠前）。
+| 字段 | 类型 | 用途 |
+| --- | --- | --- |
+| 技能 | 标题 | 名称。为空的行会被跳过 |
+| 分类 | 单选 | 决定分组，留空归入「其他」 |
+| 熟悉程度 | 单选 | 有值才显示彩色徽章，留空不占位 |
+| 具体说明 | 文本 | 名称下方的说明文字 |
+| 排序 | 数字 | 组内升序 |
 
-**联系方式**：名称（标题）、地址（URL）、图标（单选，可选
-`github / twitter / linkedin / mail / wechat / blog / zhihu / juejin / bilibili / telegram / link`）、
-展示文案、是否邮箱（复选，勾上则不带 `target="_blank"`）、排序。
+### Experience
+
+| 字段 | 类型 | 用途 |
+| --- | --- | --- |
+| 公司名称 | 标题 | 时间线条目标题。为空的行会被跳过 |
+| 职位 | 文本 | 公司名称下方彩色行 |
+| 开始时间 / 结束时间 | 日期 | 渲染成 `2022.05 — 2024.06`；**结束时间留空显示「至今」**并让节点呼吸发光 |
+| 工作职责 | 文本 | 要点列表。换行分隔或整段句号分隔都能正确拆分 |
+| 工作成果 | 文本 | 独立的「主要成果」高亮块 |
+| 排序 | 数字 | **升序即时间倒序**（库里 1 是最近一段） |
+
+### Articles
+
+结构与 Projects 类似（文章标题 / 摘要 / 分类 / 标签 / 封面图片 / 精选文章 / 排序），
+发布时间取自 `created_time`。**当前 0 行时整个区块不渲染**，写入内容后自动出现。
 
 ---
 
 ## 图片与图床
 
-封面图字段是 Notion 的 **URL 类型**，填什么就显示什么，站点不做转存、不做压缩。
-所以任何能给出直链的图床都能用：Cloudflare R2 / OSS / imgbed / GitHub 仓库 raw 链接等。
+封面图片是 Notion 的 **URL 类型**字段，填什么就显示什么，站点不做转存也不压缩。
+判断标准：链接直接粘到浏览器地址栏能看到图片，就可以填。
 
-判断标准：把链接直接粘到浏览器地址栏能看到图片，就可以填。
+图片 404 时卡片会自动摘掉 `<img>`，露出底层的渐变首字图，不会留破图。
 
 ---
 
@@ -124,28 +153,25 @@ npm run notion:setup -- --check
 
 | 想改什么 | 改哪里 |
 | --- | --- |
-| 姓名、职位、头像、邮箱、简介 | `src/data/profile.ts` |
 | 配色、圆角、字体 | `src/styles/global.css` 顶部的 `:root` 令牌 |
-| 首页区块顺序 | `src/pages/index.astro` |
+| 区块顺序与文案措辞 | `src/pages/index.astro` |
 | 导航锚点 | `src/components/Nav.astro` 的 `links` 数组 |
+| Notion 字段名 | `src/lib/schema.ts` |
 | 部署路径 | `astro.config.mjs` 的 `site` 与 `base` |
 
-身份信息（姓名/头像/简介）刻意放在本地而不是 Notion：首屏不用等接口，构建也更稳。
+### GitHub Pages 子路径
 
-### 部署到 GitHub Pages 项目站点
-
-`https://<用户名>.github.io/<仓库名>/` 这种形式需要设置 `base`：
+`https://<用户名>.github.io/<仓库名>/` 需要设置 `base`：
 
 ```js
-// astro.config.mjs
 export default defineConfig({
   site: 'https://your-username.github.io',
   base: '/your-repo-name',
 });
 ```
 
-部署到用户根站点（`https://<用户名>.github.io`）则把 `base` 改成 `'/'`。
-**`base` 配错最典型的现象是样式和图片 404。**
+部署到用户根站点则改成 `'/'`。**`base` 配错最典型的现象是样式和图片 404。**
+本地嫌 `/portfolio-homepage` 前缀碍事可以临时改成 `'/'`，发布前记得改回来。
 
 ---
 
@@ -153,7 +179,7 @@ export default defineConfig({
 
 ```bash
 npm run check     # 类型检查
-npm run build     # 产物输出到 dist/
+npm run build     # 产物输出到 dist/（会实际请求 Notion，约 1–2 秒）
 npm run preview   # 本地预览产物
 npm run verify    # check + build，CI 前的自检
 ```
@@ -163,17 +189,16 @@ npm run verify    # check + build，CI 前的自检
 ## 部署到 GitHub Pages
 
 1. 建仓库、推代码。
-2. 仓库 **Settings → Pages → Build and deployment → Source** 选 **GitHub Actions**。
+2. **Settings → Pages → Build and deployment → Source** 选 **GitHub Actions**。
 3. 配置变量：
-   - Secrets：`NOTION_API_KEY`
-   - Variables（不是机密，放 Variables 更合适）：`NOTION_PROJECTS_ID`、
-     `NOTION_SKILLS_ID`、`NOTION_EXPERIENCE_ID`、`NOTION_LINKS_ID`
-     ID 从 `.env.local` 里复制即可。
+   - **Secrets**：`NOTION_API_KEY`
+   - **Variables**：`NOTION_PROFILE_ID`、`NOTION_PROJECTS_ID`、`NOTION_SKILLS_ID`、
+     `NOTION_EXPERIENCE_ID`、`NOTION_ARTICLES_ID`（ID 不是机密，放 Variables 更合适）
 4. 手动跑一次 **Actions → 构建并部署到 GitHub Pages → Run workflow** 完成首次发布。
-   之后推送到 `main` 会自动重新构建。
+   之后推送到 `main` 会自动重建。
 
-工作流里带了一条 `cron: '0 18 * * *'`（UTC，即北京时间凌晨 2 点）的定时构建，
-这样只在 Notion 里改了内容、没提交代码，第二天也会自动同步。不想每天跑就删掉 `schedule` 段。
+工作流带了一条 `cron: '0 18 * * *'`（UTC，北京时间凌晨 2 点）的定时构建，
+这样只在 Notion 改了内容、没提交代码，第二天也会自动同步。不想每天跑就删掉 `schedule` 段。
 
 ---
 
@@ -181,14 +206,30 @@ npm run verify    # check + build，CI 前的自检
 
 **页面能打开但完全没样式** — `astro.config.mjs` 的 `base` 和实际访问路径不一致。
 
-**`[notion] 读取失败（unauthorized）`** — `NOTION_API_KEY` 不对，或 CI 里没配这个 Secret。
+**`unauthorized`** — `NOTION_API_KEY` 不对，或 CI 里没配这个 Secret。
 
-**`[notion] 读取失败（restricted_resource）`** — 数据库没授权给集成，回到「授权父页面」那一步。
+**`restricted_resource`** — 数据库没授权给集成，回到「把五个库授权给这个集成」。
+
+**`object_not_found`** — ID 粘错了。注意「复制数据库链接」拿到的是数据库 ID，
+代码两种都支持，但如果链接指向的是某个视图或页面，就解析不出来。
+
+**本地构建卡在超时后报 object_not_found** — 是网络问题被旧版本代码误报了。
+现在只有真正的「找不到」才会退化成数据库 ID 解析，网络故障会走重试。
+构建约 1–2 秒属正常，超过 10 秒基本是本机到 Notion 的链路问题。
 
 **内容改了但线上没变** — 静态站在重新构建前不会变。推送一次触发构建，或等定时构建。
 
-**某个字段填了却不显示** — 用 `npm run notion:setup -- --check` 确认读到的是哪个库，
-再核对字段名是否和 `src/lib/schema.ts` 完全一致（包括空格）。
+**某个字段填了却不显示** — 先跑 `npm run notion:setup -- --check`，它会列出缺失字段。
 
-**想加一整个新区块** — 在 `src/lib/schema.ts` 里加一份集合定义，
-跑一次 `notion:setup` 建新库，然后写组件挂到 `index.astro`。
+---
+
+## 附录：从零重建 Notion 库
+
+现有库不可用时，可以在某个已授权给集成的父页面下重建一套：
+
+```bash
+npm run notion:setup -- https://www.notion.so/父页面-xxxx --write
+```
+
+会按 `schema.ts` 的定义创建 Profile / Projects / Skills / Experience / Articles
+五个库，并把新 ID 写回 `.env.local`。**重复执行会再建一套同名库**，不要当成同步命令用。

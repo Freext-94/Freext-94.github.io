@@ -1,11 +1,12 @@
 ---
-import { profile } from '@/data/profile';
+import type { ProfileInfo } from '@/lib/types';
 
 interface Props {
+  profile: ProfileInfo;
   source: 'notion' | 'sample';
 }
 
-const { source } = Astro.props;
+const { profile, source } = Astro.props;
 const year = new Date().getFullYear();
 const builtAt = new Date().toLocaleString('zh-CN', {
   timeZone: 'Asia/Shanghai',
@@ -21,9 +22,7 @@ const builtAt = new Date().toLocaleString('zh-CN', {
       <span class="muted">{`Astro 构建，内容来自${source === 'notion' ? ' Notion' : '示例数据'}`}</span>
     </p>
 
-    <p class="built muted mono" title={builtAt}>
-      build {builtAt}
-    </p>
+    <p class="built muted mono" title={builtAt}>build {builtAt}</p>
 
     <a class="top" href="#top">
       回到顶部

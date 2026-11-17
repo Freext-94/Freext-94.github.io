@@ -1,27 +1,28 @@
 ---
 import Nav from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
-import { profile } from '@/data/profile';
+import type { ProfileInfo } from '@/lib/types';
 import '../styles/global.css';
 
 interface Props {
+  profile: ProfileInfo;
+  contentSource?: 'notion' | 'sample';
   title?: string;
   description?: string;
-  contentSource?: 'notion' | 'sample';
 }
 
 const {
-  title = `${profile.name} · ${profile.title}`,
-  description = profile.seo.description,
+  profile,
   contentSource = 'notion',
+  title = profile.positioning
+    ? `${profile.name} · ${profile.positioning}`
+    : profile.name,
+  description = profile.summary[0] ?? '个人主页与作品集。',
 } = Astro.props;
 
 // trailingSlash 为 ignore 时 BASE_URL 不带尾斜杠，直接拼接会少一个 /
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const ogImage = profile.seo.ogImage
-  ? new URL(profile.seo.ogImage, Astro.site).href
-  : undefined;
 ---
 
 <!doctype html>
@@ -37,14 +38,13 @@ const ogImage = profile.seo.ogImage
     <meta name="theme-color" content="#f6f5fb" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#09080f" media="(prefers-color-scheme: dark)" />
 
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content="profile" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
     <meta property="og:site_name" content={profile.name} />
-    {ogImage && <meta property="og:image" content={ogImage} />}
-    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
-    {ogImage && <meta name="twitter:image" content={ogImage} />}
+    {profile.avatar && <meta property="og:image" content={profile.avatar} />}
+    <meta name="twitter:card" content={profile.avatar ? 'summary_large_image' : 'summary'} />
 
     <!-- 首帧前定主题，避免刷新时闪一下亮色 -->
     <script is:inline>
@@ -59,11 +59,11 @@ const ogImage = profile.seo.ogImage
   </head>
   <body>
     <a class="skip-link" href="#main">跳到主要内容</a>
-    <Nav />
+    <Nav profile={profile} />
     <main id="main">
       <slot />
     </main>
-    <Footer source={contentSource} />
+    <Footer profile={profile} source={contentSource} />
   </body>
 </html>
 

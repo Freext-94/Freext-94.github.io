@@ -1,15 +1,32 @@
+export interface ProfileInfo {
+  name: string;
+  /** 首屏大字，来自「职业定位」 */
+  positioning: string;
+  /** 「个人简介」按空行拆成的段落 */
+  summary: string[];
+  city: string;
+  email: string;
+  github?: string;
+  avatar?: string;
+  degree?: string;
+  school?: string;
+  gradYear?: number;
+  /** 头像为空时用来当圆形徽标 */
+  initials: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   summary: string;
-  detail: string[];
-  tags: string[];
+  category?: string;
   stack: string[];
   image?: string;
-  live?: string;
+  demo?: string;
   repo?: string;
-  period?: string;
-  role?: string;
+  slug?: string;
+  /** 「发布状态」原样透出，未填写时为 undefined */
+  status?: string;
   featured: boolean;
   order: number;
 }
@@ -18,40 +35,46 @@ export interface Skill {
   id: string;
   name: string;
   category: string;
-  /** 0–100，来自 Notion 百分比数字属性 */
-  level: number;
+  proficiency?: string;
   note?: string;
-  icon?: string;
   order: number;
 }
 
 export interface ExperienceItem {
   id: string;
+  company: string;
   role: string;
-  org: string;
+  /** 已经拼好的「2022.05 — 2024.06」，结束时间为空则是「至今」 */
   period: string;
-  location?: string;
-  highlights: string[];
+  start?: string;
+  end?: string;
   current: boolean;
-  type: string;
+  duties: string[];
+  achievements: string[];
   order: number;
 }
 
-export interface SocialLink {
+export interface Article {
   id: string;
-  name: string;
-  url: string;
-  icon: string;
-  handle?: string;
-  isEmail: boolean;
+  title: string;
+  summary: string;
+  category?: string;
+  tags: string[];
+  image?: string;
+  slug?: string;
+  featured: boolean;
+  /** ISO 日期，来自 created_time */
+  publishedAt?: string;
+  status?: string;
   order: number;
 }
 
 export interface Portfolio {
+  profile: ProfileInfo;
   projects: Project[];
   skills: Skill[];
   experience: ExperienceItem[];
-  links: SocialLink[];
+  articles: Article[];
   /** sample 表示未配置 Notion，使用了内置示例数据 */
   source: 'notion' | 'sample';
 }

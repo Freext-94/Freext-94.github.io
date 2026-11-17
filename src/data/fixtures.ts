@@ -1,143 +1,99 @@
-import type { ExperienceItem, Project, Skill, SocialLink } from '@/lib/types';
+import type { Article, ExperienceItem, ProfileInfo, Project, Skill } from '@/lib/types';
 
 /**
- * 未配置 Notion 凭证时使用的兜底数据，让 `npm run dev` 开箱就能看效果。
- * 配置好 .env 后这份数据不会被引用到产物里。
+ * 未配置 Notion 凭证时的兜底数据，让 `npm run dev` 开箱就能看到布局。
+ * 字段形状与真实库一致，但内容是虚构的——不要把个人信息写在这里。
  */
+const profile: ProfileInfo = {
+  name: 'Sample Name',
+  positioning: '示例身份 · 未接入 Notion',
+  summary: [
+    '这是一段占位简介。配置 .env.local 里的五个数据源 ID 后，这里会换成 Notion Profile 库中的「个人简介」。',
+    '技能、项目、经历、文章同理，都来自对应的数据源。',
+  ],
+  city: '示例城市',
+  email: 'sample@example.com',
+  github: 'https://github.com/',
+  avatar: undefined,
+  degree: '示例学历',
+  school: '示例大学',
+  gradYear: 2020,
+  initials: 'S',
+};
+
 const projects: Project[] = [
   {
     id: 'sample-1',
-    name: '星云设计系统',
-    summary: '服务 6 条产品线的跨端设计系统，覆盖 120+ 组件与一套主题令牌。',
-    detail: [
-      '从零搭建 token → 组件 → 文档 → 变更发布的全链路，设计稿与代码共用同一套语义变量。',
-      '把暗色模式成本从「每个组件改一遍」降到「换一层 token」。',
-    ],
-    tags: ['设计系统', '组件库', '开源'],
-    stack: ['TypeScript', 'React', 'Vite', 'Style Dictionary'],
-    live: 'https://example.com',
-    repo: 'https://github.com/example/design-system',
-    period: '2025.03 — 至今',
-    role: '主导者',
+    name: '示例项目：流程从 0 到 1',
+    summary: '这里显示 Notion「摘要」字段的内容，一句话说清做了什么、解决了什么问题。',
+    category: '示例分类',
+    stack: ['工具 A', '工具 B'],
+    image: undefined,
+    demo: undefined,
+    repo: 'https://github.com/',
+    slug: 'sample-one',
+    status: '已发布',
     featured: true,
     order: 1,
   },
   {
     id: 'sample-2',
-    name: '实时协作白板',
-    summary: '支持 50 人同时编辑的白板，冲突合并走 CRDT，端到端延迟低于 80ms。',
-    detail: [
-      '用 Yjs 做文档同步，自研渲染层把 Canvas 绘制与命中检测合并到一帧。',
-      '离线编辑后重连可自动合并，冲突不需要用户感知。',
-    ],
-    tags: ['实时', 'Canvas', '协作'],
-    stack: ['TypeScript', 'Yjs', 'WebSocket', 'Canvas'],
-    live: 'https://example.com',
-    period: '2024.09 — 2025.02',
-    role: '前端负责人',
+    name: '示例项目：数据整理与分析',
+    summary: '「发布状态」字段会原样显示成右上角的徽章，未填写时不显示。',
+    category: '示例分类',
+    stack: ['工具 C'],
+    slug: 'sample-two',
+    status: '进行中',
     featured: true,
     order: 2,
   },
   {
     id: 'sample-3',
-    name: 'AI 写作助手',
-    summary: '把长文档拆段做上下文检索，配合流式输出与可回溯的改写历史。',
-    detail: ['设计了分段缓存与增量重绘策略，长文改写时不再整页闪烁。'],
-    tags: ['AI', '流式', '生产力'],
-    stack: ['Astro', 'SSE', 'SQLite', 'Embedding'],
-    live: 'https://example.com',
-    repo: 'https://github.com/example/writer',
-    period: '2024.04 — 2024.08',
-    role: '独立开发',
-    featured: true,
-    order: 3,
-  },
-  {
-    id: 'sample-4',
-    name: '移动端打卡小程序',
-    summary: '日活 3000 的习惯打卡小程序，首屏 1.1s，包体控制在 900KB。',
-    detail: ['用本地优先的写入策略解决弱网重复提交，配合后台批量补传。'],
-    tags: ['小程序', '性能优化'],
-    stack: ['微信小程序', 'Skyline', '云开发'],
-    period: '2023.10 — 2024.03',
-    role: '独立开发',
+    name: '示例项目：培训与推广',
+    summary: '没有封面图时，卡片会用项目首字生成一张渐变底图。',
+    category: '示例分类',
+    stack: ['工具 D', '工具 E'],
+    slug: 'sample-three',
     featured: false,
-    order: 4,
+    order: 3,
   },
 ];
 
 const skills: Skill[] = [
-  { id: 's1', name: 'TypeScript', category: '语言', level: 92, icon: '🧩', order: 1 },
-  { id: 's2', name: 'Vue / Nuxt', category: '框架', level: 88, icon: '⚙️', order: 2 },
-  { id: 's3', name: 'React / Next', category: '框架', level: 84, icon: '⚛️', order: 3 },
-  { id: 's4', name: 'Astro', category: '框架', level: 80, note: '本就是这个站点', icon: '🚀', order: 4 },
-  { id: 's5', name: 'CSS / 动效', category: '工程', level: 90, icon: '🎨', order: 5 },
-  { id: 's6', name: 'Node / FastAPI', category: '工程', level: 76, icon: '🔧', order: 6 },
-  { id: 's7', name: '性能优化', category: '工程', level: 85, icon: '📊', order: 7 },
-  { id: 's8', name: '设计系统', category: '其他', level: 87, icon: '✨', order: 8 },
+  { id: 's1', name: '示例技能 A', category: '分组一', proficiency: '熟练', note: '这里显示「具体说明」字段。', order: 1 },
+  { id: 's2', name: '示例技能 B', category: '分组一', note: '「熟悉程度」没填就不显示徽章。', order: 2 },
+  { id: 's3', name: '示例技能 C', category: '分组二', proficiency: '掌握', note: '技能按分类自动分组。', order: 3 },
+  { id: 's4', name: '示例技能 D', category: '分组二', order: 4 },
+  { id: 's5', name: '示例技能 E', category: '分组三', proficiency: '了解', order: 5 },
 ];
 
 const experience: ExperienceItem[] = [
   {
     id: 'e1',
-    role: '高级前端工程师',
-    org: '某某科技',
-    period: '2024.06 — 至今',
-    location: '杭州',
-    highlights: [
-      '主导设计系统建设，组件复用率从 34% 提升到 78%',
-      '把核心页面 LCP 从 3.4s 优化到 1.2s',
-      '带 3 人小组，负责前端规范与评审机制',
-    ],
-    current: true,
-    type: '工作',
-    order: 4,
+    company: '示例公司甲',
+    role: '示例职位',
+    period: '2022.05 — 2024.06',
+    start: '2022-05-01',
+    end: '2024-06-01',
+    current: false,
+    duties: ['「工作职责」里一行一条，会自动拆成要点。', '整段用句号连接也能拆开。'],
+    achievements: ['「工作成果」单独成块，显示在职责下方。'],
+    order: 1,
   },
   {
     id: 'e2',
-    role: '前端工程师',
-    org: '某某网络',
-    period: '2022.07 — 2024.05',
-    location: '上海',
-    highlights: ['负责中台表单引擎，支撑 40+ 业务表单配置化', '推动构建从 Webpack 迁到 Vite，冷启动快 8 倍'],
-    current: false,
-    type: '工作',
-    order: 3,
-  },
-  {
-    id: 'e3',
-    role: '前端实习生',
-    org: '某某信息',
-    period: '2021.12 — 2022.06',
-    location: '远程',
-    highlights: ['独立交付内部数据看板 v1'],
-    current: false,
-    type: '实习',
+    company: '示例公司乙',
+    role: '示例职位',
+    period: '2020.04 — 至今',
+    start: '2020-04-01',
+    end: undefined,
+    current: true,
+    duties: ['结束时间留空时，右侧会显示「至今」并让时间线节点呼吸。'],
+    achievements: [],
     order: 2,
   },
-  {
-    id: 'e4',
-    role: '计算机科学与技术 本科',
-    org: '某某大学',
-    period: '2018.09 — 2022.06',
-    location: '南京',
-    highlights: ['校 ACM 队员，专注人机交互方向课程设计'],
-    current: false,
-    type: '教育',
-    order: 1,
-  },
 ];
 
-const links: SocialLink[] = [
-  { id: 'l1', name: 'GitHub', url: 'https://github.com/', icon: 'github', handle: '@yourname', isEmail: false, order: 1 },
-  { id: 'l2', name: '邮箱', url: 'mailto:hello@example.com', icon: 'mail', handle: 'hello@example.com', isEmail: true, order: 2 },
-  { id: 'l3', name: '掘金', url: 'https://juejin.cn/', icon: 'juejin', handle: '@yourname', isEmail: false, order: 3 },
-  { id: 'l4', name: '博客', url: 'https://example.com', icon: 'blog', handle: 'example.com', isEmail: false, order: 4 },
-];
+const articles: Article[] = [];
 
-export const SAMPLE_PORTFOLIO = {
-  projects,
-  skills,
-  experience,
-  links,
-};
+export const SAMPLE_PORTFOLIO = { profile, projects, skills, experience, articles };

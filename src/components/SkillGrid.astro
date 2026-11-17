@@ -19,23 +19,21 @@ const groups = skills.reduce<Map<string, Skill[]>>((acc, skill) => {
 <div class="wrap">
   {
     [...groups].map(([category, items], groupIndex) => (
-      <div class="group" data-reveal style={`--i:${groupIndex}`}>
+      <div class="card group" data-reveal style={`--i:${groupIndex}`}>
         <h3 class="group-title">
           <span class="dot" aria-hidden="true"></span>
           {category}
+          <span class="count mono">{items.length}</span>
         </h3>
 
         <ul class="list">
           {items.map((skill, index) => (
             <li class="row" data-reveal style={`--i:${index}`}>
-              <span class="icon" aria-hidden="true">{skill.icon ?? '·'}</span>
-              <span class="name" title={skill.note}>
-                {skill.name}
-              </span>
-              <span class="track">
-                <span class="fill" style={`--level:${skill.level}%`}></span>
-              </span>
-              <span class="value mono">{skill.level}</span>
+              <div class="head">
+                <span class="name">{skill.name}</span>
+                {skill.proficiency && <span class="pill pill-brand">{skill.proficiency}</span>}
+              </div>
+              {skill.note && <p class="note">{skill.note}</p>}
             </li>
           ))}
         </ul>
@@ -47,8 +45,8 @@ const groups = skills.reduce<Map<string, Skill[]>>((acc, skill) => {
 <style>
   .wrap {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
-    gap: clamp(1.25rem, 3vw, 2rem);
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: clamp(1.25rem, 3vw, 1.9rem);
     align-items: start;
   }
 
@@ -60,24 +58,29 @@ const groups = skills.reduce<Map<string, Skill[]>>((acc, skill) => {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-block-end: 1.1rem;
+    margin-block-end: 1.15rem;
     font-size: 0.95rem;
-    letter-spacing: 0.02em;
-    color: var(--text-muted);
-    text-transform: uppercase;
     font-weight: 700;
+    color: var(--text);
   }
 
   .group-title .dot {
-    inline-size: 0.45rem;
-    block-size: 0.45rem;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
     border-radius: 3px;
     background: var(--brand);
+    flex-shrink: 0;
+  }
+
+  .count {
+    margin-inline-start: auto;
+    font-size: 0.75rem;
+    color: var(--text-muted);
   }
 
   .list {
     display: grid;
-    gap: 0.9rem;
+    gap: 1rem;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -85,67 +88,23 @@ const groups = skills.reduce<Map<string, Skill[]>>((acc, skill) => {
 
   .row {
     display: grid;
-    grid-template-columns: 1.4rem minmax(0, 1fr) 4.5rem 2rem;
-    align-items: center;
-    gap: 0.7rem;
+    gap: 0.2rem;
   }
 
-  .icon {
-    font-size: 1rem;
-    text-align: center;
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
   }
 
   .name {
-    font-weight: 600;
-    font-size: 0.95rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-weight: 640;
+    font-size: 0.98rem;
   }
 
-  .track {
-    block-size: 0.42rem;
-    border-radius: 999px;
-    background: var(--sunken);
-    overflow: hidden;
-  }
-
-  .fill {
-    display: block;
-    block-size: 100%;
-    inline-size: 0;
-    border-radius: inherit;
-    background-image: var(--brand);
-    background-size: 200% 100%;
-    transition: inline-size 1.05s var(--ease) 0.15s;
-  }
-
-  /* 进场那一刻才把宽度撑起来，比页面一加载就静止的进度条有精神 */
-  .row.is-visible .fill {
-    inline-size: var(--level, 0%);
-  }
-
-  .value {
+  .note {
+    font-size: 0.87rem;
     color: var(--text-muted);
-    font-size: 0.8rem;
-    text-align: end;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .row:hover .fill {
-    background-position: 100% 0;
-    transition:
-      inline-size 1.05s var(--ease) 0.15s,
-      background-position 0.6s var(--ease);
-  }
-
-  @media (width <= 30rem) {
-    .row {
-      grid-template-columns: 1.2rem minmax(0, 1fr) 3rem;
-    }
-
-    .value {
-      display: none;
-    }
   }
 </style>

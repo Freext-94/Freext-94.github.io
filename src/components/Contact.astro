@@ -1,13 +1,40 @@
 ---
 import SocialIcon from '@/components/SocialIcon.astro';
-import { profile } from '@/data/profile';
-import type { SocialLink } from '@/lib/types';
+import type { ProfileInfo } from '@/lib/types';
 
 interface Props {
-  links: SocialLink[];
+  profile: ProfileInfo;
 }
 
-const { links } = Astro.props;
+const { profile } = Astro.props;
+
+interface ContactItem {
+  label: string;
+  caption: string;
+  icon: string;
+  url: string;
+  isEmail: boolean;
+}
+
+const items: ContactItem[] = [];
+if (profile.email) {
+  items.push({
+    label: profile.email,
+    caption: '邮箱',
+    icon: 'mail',
+    url: `mailto:${profile.email}`,
+    isEmail: true,
+  });
+}
+if (profile.github) {
+  items.push({
+    label: profile.github.replace(/^https?:\/\/(www\.)?/, ''),
+    caption: 'GitHub',
+    icon: 'github',
+    url: profile.github,
+    isEmail: false,
+  });
+}
 ---
 
 <div class="card panel">
@@ -15,48 +42,30 @@ const { links } = Astro.props;
 
   <div class="content">
     <h3 class="big">
-      一起做点<span class="brand-text">有意思的东西</span>
+      很高兴认识你，<span class="brand-text">随时联系</span>
     </h3>
     <p class="lede">
-      {profile.available
-        ? `${profile.availableNote}，聊聊想法或要一份完整简历都可以。`
-        : '如果需要完整简历或想聊聊合作，欢迎直接邮件我。'}
+      关于 AI 应用落地、企业数字化运营，或者想索取一份完整简历，都可以直接写邮件给我
+      {profile.city ? <>（目前在{profile.city}）</> : ''}。
     </p>
 
-    <div class="actions">
-      <a
-        class="btn btn-primary"
-        href={`mailto:${profile.email}?subject=${encodeURIComponent(`来自 ${profile.name} 主页的来信`)}`}
-      >
-        <SocialIcon icon="mail" label="邮件" />
-        {profile.email}
-      </a>
-      {
-        profile.resumeUrl && (
-          <a class="btn btn-ghost" href={profile.resumeUrl} rel="noopener">
-            下载简历
-          </a>
-        )
-      }
-    </div>
-
     {
-      links.length > 0 && (
+      items.length > 0 && (
         <ul class="links">
-          {links.map((link, index) => (
+          {items.map((item, index) => (
             <li data-reveal style={`--i:${index}`}>
               <a
-                href={link.url}
                 class="link"
-                target={link.isEmail ? undefined : '_blank'}
-                rel={link.isEmail ? undefined : 'noopener noreferrer'}
+                href={item.url}
+                target={item.isEmail ? undefined : '_blank'}
+                rel={item.isEmail ? undefined : 'noopener noreferrer'}
               >
                 <span class="badge">
-                  <SocialIcon icon={link.icon} label={link.name} />
+                  <SocialIcon icon={item.icon} label={item.caption} />
                 </span>
                 <span class="text">
-                  <span class="name">{link.name}</span>
-                  {link.handle && <span class="handle mono">{link.handle}</span>}
+                  <span class="caption">{item.caption}</span>
+                  <span class="label">{item.label}</span>
                 </span>
               </a>
             </li>
@@ -101,28 +110,20 @@ const { links } = Astro.props;
   }
 
   .big {
-    font-size: clamp(1.8rem, 4.4vw, 3rem);
+    font-size: clamp(1.7rem, 4.2vw, 2.8rem);
   }
 
   .lede {
     color: var(--text-muted);
-    font-size: 1.05rem;
-    max-inline-size: 34rem;
-  }
-
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem;
-    margin-block-start: 0.75rem;
+    font-size: 1.02rem;
+    max-inline-size: 36rem;
   }
 
   .links {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
     gap: 0.6rem;
-    margin: 1.75rem 0 0;
+    margin: 1.5rem 0 0;
     padding: 0;
     list-style: none;
   }
@@ -170,14 +171,14 @@ const { links } = Astro.props;
     min-inline-size: 0;
   }
 
-  .name {
-    font-weight: 620;
-    font-size: 0.92rem;
+  .caption {
+    font-size: 0.74rem;
+    color: var(--text-muted);
   }
 
-  .handle {
-    font-size: 0.76rem;
-    color: var(--text-muted);
+  .label {
+    font-weight: 620;
+    font-size: 0.92rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

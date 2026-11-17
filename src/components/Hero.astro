@@ -1,13 +1,14 @@
 ---
-import { profile } from '@/data/profile';
+import type { ProfileInfo } from '@/lib/types';
 
 interface Props {
+  profile: ProfileInfo;
   projectCount: number;
   skillCount: number;
   experienceCount: number;
 }
 
-const { projectCount, skillCount, experienceCount } = Astro.props;
+const { profile, projectCount, skillCount, experienceCount } = Astro.props;
 
 const stats = [
   { value: projectCount, label: '个项目' },
@@ -19,39 +20,37 @@ const stats = [
 <section class="hero" id="top">
   <div class="shell grid">
     <div class="copy">
-      {
-        profile.available && (
-          <p class="status" data-reveal style="--i:0">
-            <span class="dot" aria-hidden="true"></span>
-            {profile.availableNote}
-          </p>
-        )
-      }
+      <p class="place" data-reveal style="--i:0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" />
+          <circle cx="12" cy="10" r="2.6" />
+        </svg>
+        {profile.city || '未填写所在城市'}
+      </p>
 
       <h1 data-reveal style="--i:1">
         你好，我是<br />
         <span class="brand-text">{profile.name}</span>
       </h1>
 
-      <p class="role" data-reveal style="--i:2">
-        <span class="role-label">我是一名</span>
-        <span class="role-track" data-roles={JSON.stringify(profile.roles)}>
-          {profile.roles[0]}
-        </span>
-      </p>
+      {
+        profile.positioning && (
+          <p class="positioning" data-reveal style="--i:2">
+            {profile.positioning}
+          </p>
+        )
+      }
 
-      <p class="tagline" data-reveal style="--i:3">
-        {profile.tagline}
-      </p>
+      {profile.summary[0] && <p class="tagline" data-reveal style="--i:3">{profile.summary[0]}</p>}
 
       <div class="cta" data-reveal style="--i:4">
         <a class="btn btn-primary" href="#projects">
-          看看作品
+          看看项目
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="arrow">
             <path d="M5 12h14M13 6l6 6-6 6" />
           </svg>
         </a>
-        <a class="btn btn-ghost" href="#contact">保持联系</a>
+        <a class="btn btn-ghost" href="#contact">联系我</a>
       </div>
 
       <dl class="stats" data-reveal style="--i:5">
@@ -74,35 +73,14 @@ const stats = [
             <img src={profile.avatar} alt={profile.name} width="360" height="360" loading="eager" decoding="async" />
           ) : (
             <span class="initials" aria-hidden="true">
-              {profile.shortName}
+              {profile.initials}
             </span>
           )
         }
       </div>
-      <p class="meta location">{profile.location}</p>
     </div>
   </div>
 </section>
-
-<script>
-  const track = document.querySelector<HTMLElement>('[data-roles]');
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  if (track && !reduce) {
-    const roles: string[] = JSON.parse(track.dataset.roles ?? '[]');
-    if (roles.length > 1) {
-      let index = 0;
-      setInterval(() => {
-        index = (index + 1) % roles.length;
-        track.classList.remove('is-swapping');
-        // 强制回流，否则连续两次赋值同一个 class 不会重启动画
-        void track.offsetWidth;
-        track.classList.add('is-swapping');
-        track.textContent = roles[index];
-      }, 2600);
-    }
-  }
-</script>
 
 <style>
   .hero {
@@ -116,101 +94,36 @@ const stats = [
     gap: clamp(2rem, 6vw, 5rem);
   }
 
-  .status {
+  .place {
     display: inline-flex;
     align-items: center;
-    gap: 0.55rem;
-    padding: 0.35rem 0.9rem 0.35rem 0.7rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 0.84rem;
+    gap: 0.45rem;
+    font-size: 0.86rem;
     font-weight: 560;
     color: var(--text-muted);
-    margin-block-end: 1.6rem;
+    margin-block-end: 1.4rem;
   }
 
-  .dot {
-    position: relative;
-    inline-size: 0.5rem;
-    block-size: 0.5rem;
-    border-radius: 50%;
-    background: #16a34a;
-    flex-shrink: 0;
-  }
-
-  [data-theme='dark'] .dot {
-    background: #4ade80;
-  }
-
-  /* 扩散环表示「在线/开放」，比静态圆点更有生气 */
-  .dot::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: inherit;
-    animation: pulse 2.2s var(--ease) infinite;
-  }
-
-  @keyframes pulse {
-    0% {
-      transform: scale(1);
-      opacity: 0.7;
-    }
-    70%,
-    100% {
-      transform: scale(3.2);
-      opacity: 0;
-    }
+  .place svg {
+    inline-size: 1rem;
+    block-size: 1rem;
+    color: var(--accent-2);
   }
 
   .hero h1 {
     margin-block-end: 1.1rem;
   }
 
-  .role {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    font-size: clamp(1.05rem, 2.2vw, 1.35rem);
-    font-weight: 600;
-    margin-block-end: 1rem;
-  }
-
-  .role-label {
-    color: var(--text-muted);
-    font-weight: 500;
-  }
-
-  .role-track {
-    display: inline-block;
-    background: var(--brand);
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .role-track.is-swapping {
-    animation: swap 0.55s var(--ease);
-  }
-
-  @keyframes swap {
-    0% {
-      opacity: 0;
-      transform: translateY(0.5em);
-    }
-    100% {
-      opacity: 1;
-      transform: none;
-    }
+  .positioning {
+    font-size: clamp(1.1rem, 2.4vw, 1.45rem);
+    font-weight: 680;
+    letter-spacing: -0.015em;
+    margin-block-end: 0.9rem;
   }
 
   .tagline {
     max-width: 34rem;
-    font-size: 1.06rem;
+    font-size: 1.02rem;
     color: var(--text-muted);
     margin-block-end: 2rem;
   }
@@ -262,13 +175,13 @@ const stats = [
     color: var(--text-muted);
   }
 
-  /* 「visual」：头像 + 缓慢旋转的 conic 渐变光环 */
+  /* 头像 + 缓慢旋转的 conic 渐变光环 */
   .visual {
     position: relative;
     display: grid;
     place-items: center;
     aspect-ratio: 1;
-    max-inline-size: 26rem;
+    max-inline-size: 24rem;
     justify-self: center;
     inline-size: 100%;
   }
@@ -327,21 +240,6 @@ const stats = [
     -webkit-text-fill-color: transparent;
   }
 
-  .meta {
-    position: absolute;
-    inset-block-end: 6%;
-    inset-inline-start: 50%;
-    translate: -50% 0;
-    padding: 0.35rem 0.85rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--surface-solid);
-    box-shadow: var(--shadow-card);
-    font-size: 0.82rem;
-    font-weight: 560;
-    white-space: nowrap;
-  }
-
   @media (width <= 52rem) {
     .grid {
       grid-template-columns: 1fr;
@@ -349,7 +247,7 @@ const stats = [
 
     .visual {
       order: -1;
-      max-inline-size: 17rem;
+      max-inline-size: 15rem;
     }
 
     .cta {

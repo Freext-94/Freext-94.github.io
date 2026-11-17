@@ -5,25 +5,29 @@ import Hero from '@/components/Hero.astro';
 import SkillGrid from '@/components/SkillGrid.astro';
 import ProjectCard from '@/components/ProjectCard.astro';
 import Timeline from '@/components/Timeline.astro';
+import ArticleList from '@/components/ArticleList.astro';
 import Contact from '@/components/Contact.astro';
-import { profile } from '@/data/profile';
 import { getPortfolio } from '@/lib/notion';
 
-const { projects, skills, experience, links, source } = await getPortfolio();
+const { profile, projects, skills, experience, articles, source } =
+  await getPortfolio();
 
-// 第一个项目若标了「首页展示」就占据整行，作为作品集的门面
-const wideFirst = projects[0]?.featured === true;
-const highlight = wideFirst ? projects[0] : undefined;
+// 第一个项目若标了「精选」就占据整行，作为作品集的门面
+const highlight = projects[0]?.featured ? projects[0] : undefined;
 const rest = highlight ? projects.slice(1) : projects;
+
+const education = [profile.degree, profile.school, profile.gradYear]
+  .filter(Boolean)
+  .join(' · ');
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: profile.name,
-  jobTitle: profile.title,
+  jobTitle: profile.positioning,
   email: `mailto:${profile.email}`,
   url: new URL(Astro.url.pathname, Astro.site).href,
-  sameAs: links.filter((link) => !link.isEmail).map((link) => link.url),
+  sameAs: profile.github ? [profile.github] : [],
   knowsAbout: skills.map((skill) => skill.name),
 };
 
@@ -31,20 +35,21 @@ const jsonLd = {
 const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
 ---
 
-<Base contentSource={source}>
+<Base profile={profile} contentSource={source}>
   {
     /* 未配置 Notion 时只在本地开发提示，线上产物不会带这段话 */
     source === 'sample' && import.meta.env.DEV && (
       <aside class="notice">
         <div class="shell">
-          <strong>当前是内置示例数据。</strong> 建好 Notion 数据库并填入{' '}
-          <code>.env.local</code> 后即可切换为真实内容，见 README。
+          <strong>当前是内置示例数据。</strong> 配好 <code>.env.local</code> 里的五个数据源
+          ID 后即切换为 Notion 真实内容。
         </div>
       </aside>
     )
   }
 
   <Hero
+    profile={profile}
     projectCount={projects.length}
     skillCount={skills.length}
     experienceCount={experience.length}
@@ -56,7 +61,7 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
         id="about"
         eyebrow="ABOUT"
         title="关于我"
-        description={profile.title}
+        description={profile.positioning}
       >
         <div class="about">
           {profile.summary.map((paragraph, index) => (
@@ -72,8 +77,8 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
       <Section
         id="skills"
         eyebrow="SKILLS"
-        title="技能栈"
-        description="按分类整理，数字是自我评估的熟练度，不是考核结果。"
+        title="技能"
+        description="按分类整理，来自 Notion 的 Skills 库。"
       >
         <SkillGrid skills={skills} />
       </Section>
@@ -84,9 +89,9 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     projects.length > 0 && (
       <Section
         id="projects"
-        eyebrow="SELECTED WORK"
-        title="作品"
-        description="挑了几个我能讲清楚取舍的项目。完整清单在 Notion 里维护。"
+        eyebrow="PROJECTS"
+        title="项目"
+        description="做过的、正在做的事，完整清单在 Notion 里维护。"
       >
         <div class="projects">
           {highlight && <ProjectCard project={highlight} wide index={0} />}
@@ -104,15 +109,37 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
         id="experience"
         eyebrow="EXPERIENCE"
         title="经历"
-        description="工作、实习与教育，按时间倒序。"
+        description="工作履历，按时间倒序；结束时间留空表示仍在进行。"
       >
         <Timeline items={experience} />
+
+        {
+          education && (
+            <div class="education card" data-reveal>
+              <span class="edu-label">教育背景</span>
+              <p class="edu-value">{education}</p>
+            </div>
+          )
+        }
+      </Section>
+    )
+  }
+
+  {
+    articles.length > 0 && (
+      <Section
+        id="articles"
+        eyebrow="ARTICLES"
+        title="文章"
+        description="记录一些思考与沉淀。"
+      >
+        <ArticleList articles={articles} />
       </Section>
     )
   }
 
   <Section id="contact" eyebrow="CONTACT" title="联系我">
-    <Contact links={links} />
+    <Contact profile={profile} />
   </Section>
 </Base>
 
@@ -136,23 +163,23 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
 
   .about {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-    gap: clamp(1rem, 3vw, 2.5rem);
-    max-inline-size: 58rem;
+    gap: 1.15rem;
+    max-inline-size: 46rem;
   }
 
   .about p {
     position: relative;
     padding-inline-start: 1.1rem;
     color: var(--text-muted);
-    font-size: 1.05rem;
+    font-size: 1.02rem;
+    white-space: pre-line;
   }
 
   /* border-image 只能整圈生效，单侧渐变条还是用伪元素稳妥 */
   .about p::before {
     content: '';
     position: absolute;
-    inset-block: 0.2rem;
+    inset-block: 0.25rem;
     inset-inline-start: 0;
     inline-size: 2px;
     border-radius: 2px;
@@ -164,5 +191,26 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
     gap: clamp(1.25rem, 3vw, 1.9rem);
     align-items: stretch;
+  }
+
+  .education {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-block-start: 1.75rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .edu-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--accent-1);
+  }
+
+  .edu-value {
+    font-weight: 620;
+    font-size: 0.95rem;
   }
 </style>
