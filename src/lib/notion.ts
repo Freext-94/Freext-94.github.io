@@ -146,6 +146,13 @@ function hasTitle(row: NotionRow, property: string): boolean {
 async function load(): Promise<Portfolio> {
   const config = readEnv();
   if (!config) {
+    // 生产构建下静默用示例数据，等于把一个假人的简历发布上线，必须直接失败
+    if (!import.meta.env.DEV) {
+      throw new Error(
+        '[notion] 缺少 NOTION_API_KEY 或五个数据源 ID，拒绝用示例数据构建生产站点。\n' +
+          '本地预览请改用 npm run dev；CI 里请检查 Secret 与 Variable 是否都已配置。',
+      );
+    }
     console.warn('[notion] 未配置完整的 Notion 凭证，本次使用内置示例数据。');
     return { ...SAMPLE_PORTFOLIO, source: 'sample' };
   }
