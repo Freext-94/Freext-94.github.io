@@ -34,7 +34,7 @@ winget install --id OpenJS.NodeJS.22 --exact
 npm install
 cp .env.example .env.local     # 填 token 和五个数据源 ID
 npm run notion:setup -- --check   # 验证能不能读到
-npm run dev                    # http://localhost:4321/portfolio-homepage
+npm run dev                    # http://localhost:4321/
 ```
 
 **没配凭证也能跑**：缺配置时站点会用 `src/data/fixtures.ts` 里的占位数据，
@@ -159,19 +159,23 @@ npm run notion:setup -- --check
 | Notion 字段名 | `src/lib/schema.ts` |
 | 部署路径 | `astro.config.mjs` 的 `site` 与 `base` |
 
-### GitHub Pages 子路径
+### 部署路径
 
-`https://<用户名>.github.io/<仓库名>/` 需要设置 `base`：
+本项目部署在**用户根站点** `https://freext-94.github.io`，仓库名为 `Freext-94.github.io`，
+因此 `base` 必须是 `'/'`：
 
 ```js
 export default defineConfig({
-  site: 'https://your-username.github.io',
-  base: '/your-repo-name',
+  site: 'https://freext-94.github.io',
+  base: '/',
 });
 ```
 
-部署到用户根站点则改成 `'/'`。**`base` 配错最典型的现象是样式和图片 404。**
-本地嫌 `/portfolio-homepage` 前缀碍事可以临时改成 `'/'`，发布前记得改回来。
+如果以后换成项目仓库（`https://freext-94.github.io/<仓库名>/`），把 `base` 改成 `'/<仓库名>'`。
+**`base` 配错最典型的现象是页面能打开但完全没样式、图片全 404。**
+
+> 注意：只有仓库名严格等于 `<用户名>.github.io` 才是根站点。叫 `github.io` 不算，
+> 那会被当成普通项目，地址末尾仍带 `/github.io`。
 
 ---
 

@@ -1,10 +1,9 @@
 import { defineConfig } from 'astro/config';
 
-// GitHub Pages 项目站点：https://<用户名>.github.io/<仓库名>/
-// 若把仓库改名为 Freext-94.github.io 做用户根站点，把 base 改成 '/'
+// 用户根站点：仓库名为 Freext-94.github.io，直接部署在域名根路径，base 必须是 '/'
 export default defineConfig({
   site: 'https://freext-94.github.io',
-  base: '/freext-portfolio',
+  base: '/',
   trailingSlash: 'ignore',
   compressHTML: true,
   prefetch: { prefetchAll: true },
