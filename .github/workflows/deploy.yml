@@ -24,21 +24,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 这个 action 内部已经做了 actions/upload-pages-artifact，
-      # 不要再手动加一遍，否则会产生两个 artifact 让 deploy 步骤无所适从
-      - name: 构建站点
-        uses: withastro/action@v3
+      - uses: actions/setup-node@v4
         with:
-          # 该 action 默认装 Node 20，而 Astro 7.4 要求 >= 22.23.4
           node-version: '22'
+          cache: npm
+
+      # 拆成显式步骤而不是用 withastro/action，这样每一步的结论都能从
+      # Actions API 单独读到；配置缺失会写成 annotation，日志里一眼可见
+      - name: 检查 Notion 配置
         env:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          # 数据库 ID 不算机密，建议放在 Settings → Secrets and variables → Actions → Variables
           NOTION_PROFILE_ID: ${{ vars.NOTION_PROFILE_ID }}
           NOTION_PROJECTS_ID: ${{ vars.NOTION_PROJECTS_ID }}
           NOTION_SKILLS_ID: ${{ vars.NOTION_SKILLS_ID }}
           NOTION_EXPERIENCE_ID: ${{ vars.NOTION_EXPERIENCE_ID }}
           NOTION_ARTICLES_ID: ${{ vars.NOTION_ARTICLES_ID }}
+        run: |
+          missing=""
+          [ -z "$NOTION_API_KEY" ] && missing="$missing NOTION_API_KEY[Secret]"
+          for v in NOTION_PROFILE_ID NOTION_PROJECTS_ID NOTION_SKILLS_ID \
+                   NOTION_EXPERIENCE_ID NOTION_ARTICLES_ID; do
+            [ -z "${!v}" ] && missing="$missing ${v}[Variable]"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::CI 缺少配置:${missing} —— 请到 Settings → Secrets and variables → Actions 添加"
+            exit 1
+          fi
+          echo "Notion 配置齐全，node $(node -v)"
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查
+        run: npx astro check
+
+      - name: 构建站点
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_PROFILE_ID: ${{ vars.NOTION_PROFILE_ID }}
+          NOTION_PROJECTS_ID: ${{ vars.NOTION_PROJECTS_ID }}
+          NOTION_SKILLS_ID: ${{ vars.NOTION_SKILLS_ID }}
+          NOTION_EXPERIENCE_ID: ${{ vars.NOTION_EXPERIENCE_ID }}
+          NOTION_ARTICLES_ID: ${{ vars.NOTION_ARTICLES_ID }}
+        run: npx astro build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
 
   deploy:
     needs: build
