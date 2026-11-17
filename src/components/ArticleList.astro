@@ -23,6 +23,7 @@ const monthYear = (iso?: string) => {
           <div class="meta">
             {article.category && <span class="pill pill-brand">{article.category}</span>}
             {published && <span class="when mono">{published}</span>}
+            {article.status && <span class="pill">{article.status}</span>}
           </div>
 
           <h3 class="title">{article.title}</h3>

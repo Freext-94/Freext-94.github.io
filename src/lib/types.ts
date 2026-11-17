@@ -37,6 +37,7 @@ export interface Skill {
   category: string;
   proficiency?: string;
   note?: string;
+  status?: string;
   order: number;
 }
 
@@ -51,6 +52,7 @@ export interface ExperienceItem {
   current: boolean;
   duties: string[];
   achievements: string[];
+  status?: string;
   order: number;
 }
 
