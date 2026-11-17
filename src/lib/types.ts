@@ -27,9 +27,16 @@ export interface Project {
   slug?: string;
   /** 「发布状态」原样透出，未填写时为 undefined */
   status?: string;
+  details?: ProjectDetailBlock[];
   featured: boolean;
   order: number;
 }
+
+export type ProjectDetailBlock =
+  | { type: 'heading'; level: 1 | 2 | 3; text: string }
+  | { type: 'paragraph' | 'quote'; text: string }
+  | { type: 'list'; ordered: boolean; items: string[] }
+  | { type: 'image'; url: string; caption?: string };
 
 export interface Skill {
   id: string;

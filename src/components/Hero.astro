@@ -9,6 +9,7 @@ interface Props {
 }
 
 const { profile, projectCount, skillCount, experienceCount } = Astro.props;
+const avatar = profile.avatar || `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}avatar.png`;
 
 const stats = [
   { value: projectCount, label: '个项目' },
@@ -69,13 +70,7 @@ const stats = [
       <div class="ring" aria-hidden="true"></div>
       <div class="portrait">
         {
-          profile.avatar ? (
-            <img src={profile.avatar} alt={profile.name} width="360" height="360" loading="eager" decoding="async" />
-          ) : (
-            <span class="initials" aria-hidden="true">
-              {profile.initials}
-            </span>
-          )
+          <img src={avatar} alt={profile.name} width="360" height="360" loading="eager" decoding="async" />
         }
       </div>
     </div>
@@ -226,7 +221,7 @@ const stats = [
   .portrait img {
     inline-size: 100%;
     block-size: 100%;
-    object-fit: cover;
+    object-fit: contain;
   }
 
   .initials {

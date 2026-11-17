@@ -16,6 +16,7 @@ import {
   type NotionRow,
 } from './normalize';
 import type { Portfolio } from './types';
+import type { ProjectDetailBlock } from './types';
 import { SAMPLE_PORTFOLIO } from '@/data/fixtures';
 
 const { Client, collectPaginatedAPI, extractNotionId, isFullDatabase, isNotionClientError } =
@@ -143,6 +144,54 @@ function hasTitle(row: NotionRow, property: string): boolean {
   return (row.properties[property]?.title ?? []).length > 0;
 }
 
+interface NotionBlock {
+  type: string;
+  [key: string]: unknown;
+}
+
+function blockText(block: NotionBlock): string {
+  const value = block[block.type] as { rich_text?: Array<{ plain_text?: string }> } | undefined;
+  return (value?.rich_text ?? []).map((item) => item.plain_text ?? '').join('').trim();
+}
+
+function imageUrl(block: NotionBlock): string | undefined {
+  const value = block.image as
+    | { external?: { url?: string }; file?: { url?: string } }
+    | undefined;
+  return value?.external?.url ?? value?.file?.url;
+}
+
+function toProjectDetails(blocks: NotionBlock[]): ProjectDetailBlock[] {
+  const details: ProjectDetailBlock[] = [];
+  for (const block of blocks) {
+    const text = blockText(block);
+    if (block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3') {
+      details.push({ type: 'heading', level: Number(block.type.at(-1)) as 1 | 2 | 3, text });
+    } else if (block.type === 'paragraph' && text) {
+      details.push({ type: 'paragraph', text });
+    } else if (block.type === 'quote' && text) {
+      details.push({ type: 'quote', text });
+    } else if (block.type === 'bulleted_list_item' || block.type === 'numbered_list_item') {
+      const ordered = block.type === 'numbered_list_item';
+      const previous = details.at(-1);
+      if (previous?.type === 'list' && previous.ordered === ordered) previous.items.push(text);
+      else details.push({ type: 'list', ordered, items: [text] });
+    } else if (block.type === 'image') {
+      const url = imageUrl(block);
+      if (url) details.push({ type: 'image', url, caption: blockText(block) || undefined });
+    }
+  }
+  return details;
+}
+
+async function readProjectDetails(api: NotionClient, pageId: string): Promise<ProjectDetailBlock[]> {
+  const blocks = await collectPaginatedAPI(api.blocks.children.list, {
+    block_id: pageId,
+    page_size: 100,
+  });
+  return toProjectDetails(blocks as unknown as NotionBlock[]);
+}
+
 async function load(): Promise<Portfolio> {
   const config = readEnv();
   if (!config) {
@@ -173,12 +222,22 @@ async function load(): Promise<Portfolio> {
       throw new Error('Profile 库里没有任何记录，页面无法确定姓名与简介。');
     }
 
+    const projects = projectRows
+      .filter((row) => hasTitle(row, PROP.projects.title))
+      .map(toProject)
+      .sort(byOrder);
+
+    await Promise.all(
+      projects.map(async (project) => {
+        if (!project.slug) return;
+        const row = projectRows.find((item) => item.id === project.id);
+        if (row) project.details = await withRetry(project.name, () => readProjectDetails(api, row.id));
+      }),
+    );
+
     return {
       profile: toProfile(profileRow),
-      projects: projectRows
-        .filter((row) => hasTitle(row, PROP.projects.title))
-        .map(toProject)
-        .sort(byOrder),
+      projects,
       skills: skillRows
         .filter((row) => hasTitle(row, PROP.skills.title))
         .map(toSkill)

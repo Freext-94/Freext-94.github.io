@@ -52,6 +52,28 @@ const home = import.meta.env.BASE_URL.replace(/\/?$/, '/');
     }
 
     {
+      project.details?.map((block) => {
+        if (block.type === 'heading') {
+          const Tag = `h${block.level}` as 'h1' | 'h2' | 'h3';
+          return <Tag class:list={['detail-heading', `level-${block.level}`]}>{block.text}</Tag>;
+        }
+        if (block.type === 'paragraph') return <p class="detail-paragraph">{block.text}</p>;
+        if (block.type === 'quote') return <blockquote class="quote">{block.text}</blockquote>;
+        if (block.type === 'list') {
+          const List = block.ordered ? 'ol' : 'ul';
+          return <List class="detail-list">{block.items.map((item) => <li>{item}</li>)}</List>;
+        }
+        if (block.type === 'image') return (
+          <figure class="detail-image card">
+            <img src={block.url} alt={block.caption || `${project.name} 项目图片`} loading="lazy" />
+            {block.caption && <figcaption>{block.caption}</figcaption>}
+          </figure>
+        );
+        return null;
+      })
+    }
+
+    {
       (project.demo || project.repo) && (
         <nav class="actions" aria-label="项目链接">
           {project.demo && <a class="btn btn-primary" href={project.demo} target="_blank" rel="noopener noreferrer">查看演示</a>}
@@ -120,6 +142,55 @@ const home = import.meta.env.BASE_URL.replace(/\/?$/, '/');
   .content-block h2 {
     margin-block-end: 0.8rem;
     font-size: 1rem;
+  }
+
+  .detail-heading {
+    max-inline-size: 48rem;
+    margin-block: 2rem 0.65rem;
+  }
+
+  .detail-heading.level-1 { font-size: 1.6rem; }
+  .detail-heading.level-2 { font-size: 1.3rem; }
+  .detail-heading.level-3 { font-size: 1.08rem; }
+
+  .detail-paragraph,
+  .detail-list,
+  .quote {
+    max-inline-size: 48rem;
+    color: var(--text-muted);
+    line-height: 1.85;
+  }
+
+  .detail-list {
+    display: grid;
+    gap: 0.4rem;
+    padding-inline-start: 1.5rem;
+  }
+
+  .quote {
+    margin-inline: 0;
+    padding: 0.75rem 1rem;
+    border-inline-start: 3px solid var(--accent-1);
+    background: var(--surface);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .detail-image {
+    max-inline-size: 54rem;
+    margin-block: 1.5rem;
+    overflow: hidden;
+  }
+
+  .detail-image img {
+    inline-size: 100%;
+    max-block-size: 38rem;
+    object-fit: contain;
+  }
+
+  .detail-image figcaption {
+    padding: 0.65rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
   }
 
   .pills {
