@@ -1,0 +1,359 @@
+---
+import { profile } from '@/data/profile';
+
+interface Props {
+  projectCount: number;
+  skillCount: number;
+  experienceCount: number;
+}
+
+const { projectCount, skillCount, experienceCount } = Astro.props;
+
+const stats = [
+  { value: projectCount, label: '个项目' },
+  { value: skillCount, label: '项技能' },
+  { value: experienceCount, label: '段经历' },
+];
+---
+
+<section class="hero" id="top">
+  <div class="shell grid">
+    <div class="copy">
+      {
+        profile.available && (
+          <p class="status" data-reveal style="--i:0">
+            <span class="dot" aria-hidden="true"></span>
+            {profile.availableNote}
+          </p>
+        )
+      }
+
+      <h1 data-reveal style="--i:1">
+        你好，我是<br />
+        <span class="brand-text">{profile.name}</span>
+      </h1>
+
+      <p class="role" data-reveal style="--i:2">
+        <span class="role-label">我是一名</span>
+        <span class="role-track" data-roles={JSON.stringify(profile.roles)}>
+          {profile.roles[0]}
+        </span>
+      </p>
+
+      <p class="tagline" data-reveal style="--i:3">
+        {profile.tagline}
+      </p>
+
+      <div class="cta" data-reveal style="--i:4">
+        <a class="btn btn-primary" href="#projects">
+          看看作品
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="arrow">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <a class="btn btn-ghost" href="#contact">保持联系</a>
+      </div>
+
+      <dl class="stats" data-reveal style="--i:5">
+        {
+          stats.map((stat) => (
+            <div>
+              <dt>{stat.label}</dt>
+              <dd>{stat.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+
+    <div class="visual" data-reveal style="--i:2">
+      <div class="ring" aria-hidden="true"></div>
+      <div class="portrait">
+        {
+          profile.avatar ? (
+            <img src={profile.avatar} alt={profile.name} width="360" height="360" loading="eager" decoding="async" />
+          ) : (
+            <span class="initials" aria-hidden="true">
+              {profile.shortName}
+            </span>
+          )
+        }
+      </div>
+      <p class="meta location">{profile.location}</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  const track = document.querySelector<HTMLElement>('[data-roles]');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (track && !reduce) {
+    const roles: string[] = JSON.parse(track.dataset.roles ?? '[]');
+    if (roles.length > 1) {
+      let index = 0;
+      setInterval(() => {
+        index = (index + 1) % roles.length;
+        track.classList.remove('is-swapping');
+        // 强制回流，否则连续两次赋值同一个 class 不会重启动画
+        void track.offsetWidth;
+        track.classList.add('is-swapping');
+        track.textContent = roles[index];
+      }, 2600);
+    }
+  }
+</script>
+
+<style>
+  .hero {
+    padding-block: clamp(3.5rem, 8vw, 7rem) clamp(4rem, 9vw, 8rem);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    align-items: center;
+    gap: clamp(2rem, 6vw, 5rem);
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.35rem 0.9rem 0.35rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 0.84rem;
+    font-weight: 560;
+    color: var(--text-muted);
+    margin-block-end: 1.6rem;
+  }
+
+  .dot {
+    position: relative;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-radius: 50%;
+    background: #16a34a;
+    flex-shrink: 0;
+  }
+
+  [data-theme='dark'] .dot {
+    background: #4ade80;
+  }
+
+  /* 扩散环表示「在线/开放」，比静态圆点更有生气 */
+  .dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    animation: pulse 2.2s var(--ease) infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.7;
+    }
+    70%,
+    100% {
+      transform: scale(3.2);
+      opacity: 0;
+    }
+  }
+
+  .hero h1 {
+    margin-block-end: 1.1rem;
+  }
+
+  .role {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+    font-weight: 600;
+    margin-block-end: 1rem;
+  }
+
+  .role-label {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .role-track {
+    display: inline-block;
+    background: var(--brand);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .role-track.is-swapping {
+    animation: swap 0.55s var(--ease);
+  }
+
+  @keyframes swap {
+    0% {
+      opacity: 0;
+      transform: translateY(0.5em);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .tagline {
+    max-width: 34rem;
+    font-size: 1.06rem;
+    color: var(--text-muted);
+    margin-block-end: 2rem;
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-block-end: 2.75rem;
+  }
+
+  .arrow {
+    inline-size: 1.05rem;
+    block-size: 1.05rem;
+    transition: transform 0.3s var(--ease);
+  }
+
+  .cta a:hover .arrow {
+    transform: translateX(3px);
+  }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    margin: 0;
+    padding-block-start: 1.5rem;
+    border-block-start: 1px solid var(--border);
+  }
+
+  .stats div {
+    /* dt 必须写在 dd 前面才符合 dl 语义，这里用反向排列让数字在上 */
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.1rem;
+  }
+
+  .stats dd {
+    margin: 0;
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    font-weight: 780;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stats dt {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+  }
+
+  /* 「visual」：头像 + 缓慢旋转的 conic 渐变光环 */
+  .visual {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    max-inline-size: 26rem;
+    justify-self: center;
+    inline-size: 100%;
+  }
+
+  .ring {
+    position: absolute;
+    inset: 4%;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      var(--accent-1),
+      var(--accent-2),
+      var(--accent-3),
+      var(--accent-4),
+      var(--accent-1)
+    );
+    filter: blur(0.5px);
+    opacity: 0.85;
+    -webkit-mask: radial-gradient(closest-side, transparent 82%, #000 83%);
+    mask: radial-gradient(closest-side, transparent 82%, #000 83%);
+    animation: spin 18s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
+  .portrait {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: 76%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--surface-solid);
+    box-shadow: var(--shadow-card);
+  }
+
+  .portrait img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .initials {
+    font-size: clamp(3rem, 9vw, 5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    background: var(--brand);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .meta {
+    position: absolute;
+    inset-block-end: 6%;
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface-solid);
+    box-shadow: var(--shadow-card);
+    font-size: 0.82rem;
+    font-weight: 560;
+    white-space: nowrap;
+  }
+
+  @media (width <= 52rem) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+
+    .visual {
+      order: -1;
+      max-inline-size: 17rem;
+    }
+
+    .cta {
+      margin-block-end: 2rem;
+    }
+  }
+</style>

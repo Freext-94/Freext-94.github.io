@@ -1,0 +1,190 @@
+---
+import type { ExperienceItem } from '@/lib/types';
+
+interface Props {
+  items: ExperienceItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<ol class="timeline">
+  {
+    items.map((item, index) => (
+      <li class="item" data-reveal style={`--i:${index}`}>
+        <span class="node" aria-hidden="true">
+          {item.current && <span class="live" />}
+        </span>
+
+        <div class="card body">
+          <div class="head">
+            <h3>{item.role}</h3>
+            <span class="pill type">{item.type}</span>
+          </div>
+
+          <p class="org">
+            <span class="org-name">{item.org}</span>
+            {item.location && <span class="sep" aria-hidden="true">·</span>}
+            {item.location && <span class="loc">{item.location}</span>}
+          </p>
+
+          <p class="period mono">{item.period}</p>
+
+          {item.highlights.length > 0 && (
+            <ul class="highlights">
+              {item.highlights.map((line) => (
+                <li>{line}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .timeline {
+    --rail: 1.25rem;
+    position: relative;
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* 贯穿的渐变竖线，两端淡出 */
+  .timeline::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.5rem;
+    inset-inline-start: calc(var(--rail) / 2);
+    inline-size: 2px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in oklab, var(--accent-1) 45%, transparent) 12%,
+      color-mix(in oklab, var(--accent-2) 45%, transparent) 70%,
+      transparent
+    );
+  }
+
+  .item {
+    display: grid;
+    grid-template-columns: var(--rail) minmax(0, 1fr);
+    gap: clamp(0.75rem, 2vw, 1.25rem);
+    align-items: start;
+  }
+
+  .node {
+    position: relative;
+    block-size: 2.6rem;
+    justify-self: center;
+  }
+
+  .node::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0.62rem;
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    inline-size: 0.72rem;
+    block-size: 0.72rem;
+    border-radius: 50%;
+    background: var(--surface-solid);
+    border: 2px solid var(--accent-1);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent-1) 14%, transparent);
+    transition: transform 0.35s var(--ease), border-color 0.35s;
+  }
+
+  .item:hover .node::before {
+    transform: scale(1.25);
+    border-color: var(--accent-2);
+  }
+
+  .live {
+    position: absolute;
+    inset-block-start: 0.62rem;
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    inline-size: 0.72rem;
+    block-size: 0.72rem;
+    border-radius: 50%;
+    background: var(--brand);
+    animation: breathe 2.6s var(--ease) infinite;
+  }
+
+  @keyframes breathe {
+    50% {
+      transform: scale(1.35);
+      opacity: 0.75;
+    }
+  }
+
+  .body {
+    padding: clamp(1rem, 2.2vw, 1.4rem);
+  }
+
+  .head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .type {
+    flex-shrink: 0;
+  }
+
+  .org {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-block-start: 0.25rem;
+    font-size: 0.95rem;
+  }
+
+  .org-name {
+    font-weight: 640;
+  }
+
+  .sep,
+  .loc {
+    color: var(--text-muted);
+  }
+
+  .period {
+    margin-block-start: 0.1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .highlights {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .highlights li {
+    position: relative;
+    padding-inline-start: 1rem;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+  }
+
+  .highlights li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 0.62em;
+    inline-size: 0.34rem;
+    block-size: 0.34rem;
+    border-radius: 2px;
+    background: var(--brand);
+  }
+</style>

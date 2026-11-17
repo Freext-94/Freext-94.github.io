@@ -1,0 +1,48 @@
+name: 构建并部署到 GitHub Pages
+
+on:
+  # 推送到主分支时重新构建（Notion 内容改了也要重新构建才会生效）
+  push:
+    branches: [main]
+  # 每天 UTC 18:00（北京时间 02:00）自动同步一次 Notion 内容
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 构建站点
+        uses: withastro/action@v3
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          # 数据库 ID 不算机密，建议放在 Settings → Secrets and variables → Actions → Variables
+          NOTION_PROJECTS_ID: ${{ vars.NOTION_PROJECTS_ID }}
+          NOTION_SKILLS_ID: ${{ vars.NOTION_SKILLS_ID }}
+          NOTION_EXPERIENCE_ID: ${{ vars.NOTION_EXPERIENCE_ID }}
+          NOTION_LINKS_ID: ${{ vars.NOTION_LINKS_ID }}
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

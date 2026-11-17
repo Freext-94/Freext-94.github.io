@@ -1,0 +1,95 @@
+---
+import { profile } from '@/data/profile';
+
+interface Props {
+  source: 'notion' | 'sample';
+}
+
+const { source } = Astro.props;
+const year = new Date().getFullYear();
+const builtAt = new Date().toLocaleString('zh-CN', {
+  timeZone: 'Asia/Shanghai',
+  hour12: false,
+});
+---
+
+<footer class="footer">
+  <div class="shell row">
+    <p class="copy">
+      © {year} {profile.name}
+      <span class="sep" aria-hidden="true">·</span>
+      <span class="muted">{`Astro 构建，内容来自${source === 'notion' ? ' Notion' : '示例数据'}`}</span>
+    </p>
+
+    <p class="built muted mono" title={builtAt}>
+      build {builtAt}
+    </p>
+
+    <a class="top" href="#top">
+      回到顶部
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 19V5M6 11l6-6 6 6" />
+      </svg>
+    </a>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-block-start: 1px solid var(--border);
+    padding-block: 2rem 2.5rem;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    font-size: 0.86rem;
+  }
+
+  .copy {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .sep {
+    color: var(--text-muted);
+  }
+
+  .built {
+    font-size: 0.76rem;
+  }
+
+  .top {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.25s;
+  }
+
+  .top:hover {
+    color: var(--accent-2);
+  }
+
+  .top svg {
+    inline-size: 0.95rem;
+    block-size: 0.95rem;
+    transition: transform 0.3s var(--ease);
+  }
+
+  .top:hover svg {
+    transform: translateY(-2px);
+  }
+
+  @media (width <= 46rem) {
+    .built {
+      display: none;
+    }
+  }
+</style>

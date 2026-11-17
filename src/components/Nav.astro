@@ -1,0 +1,242 @@
+---
+import { profile } from '@/data/profile';
+
+const links = [
+  { href: '#about', label: '关于' },
+  { href: '#skills', label: '技能' },
+  { href: '#projects', label: '作品' },
+  { href: '#experience', label: '经历' },
+  { href: '#contact', label: '联系' },
+];
+---
+
+<header class="nav">
+  <div class="shell inner">
+    <a class="logo" href="#top" aria-label={`${profile.name} 首页`}>
+      <span class="mark" aria-hidden="true">{profile.shortName}</span>
+      <span class="who">{profile.name}</span>
+    </a>
+
+    <nav aria-label="页面导航">
+      <ul class="links">
+        {
+          links.map((link) => (
+            <li>
+              <a href={link.href} data-nav-link>
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="actions">
+      <button
+        type="button"
+        class="toggle"
+        data-theme-toggle
+        aria-label="切换到暗色主题"
+      >
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M19.1 4.9l-1.5 1.5M6.4 17.6l-1.5 1.5" />
+        </svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" />
+        </svg>
+      </button>
+
+      {
+        profile.resumeUrl ? (
+          <a class="btn btn-primary resume" href={profile.resumeUrl} rel="noopener">
+            简历
+          </a>
+        ) : (
+          <a class="btn btn-primary resume" href="#contact">
+            联系我
+          </a>
+        )
+      }
+    </div>
+  </div>
+</header>
+
+<script>
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]')];
+  const sections = links
+    .map((link) => document.querySelector(link.getAttribute('href')!))
+    .filter((el): el is HTMLElement => el !== null);
+
+  if (links.length && sections.length) {
+    const setActive = (id: string) => {
+      links.forEach((link) =>
+        link.toggleAttribute('data-active', link.getAttribute('href') === `#${id}`),
+      );
+    };
+
+    // 只关心进入视口上沿那一段，滚动过程中高亮不会来回跳
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (visible?.target.id) setActive(visible.target.id);
+      },
+      { rootMargin: '-25% 0px -60% 0px' },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+  }
+</script>
+
+<style>
+  .nav {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 50;
+    backdrop-filter: blur(16px) saturate(1.5);
+    background: color-mix(in oklab, var(--bg) 72%, transparent);
+    border-block-end: 1px solid var(--border);
+  }
+
+  .inner {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.75rem, 3vw, 2rem);
+    block-size: 4.25rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .mark {
+    display: grid;
+    place-items: center;
+    inline-size: 2.1rem;
+    block-size: 2.1rem;
+    border-radius: 0.7rem;
+    background-image: var(--brand);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    box-shadow: 0 6px 18px -8px var(--glow);
+    transition: transform 0.35s var(--ease);
+  }
+
+  .logo:hover .mark {
+    transform: rotate(-8deg) scale(1.06);
+  }
+
+  .who {
+    font-size: 1rem;
+  }
+
+  .links {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: auto;
+  }
+
+  .links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .links a {
+    display: block;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    font-weight: 560;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.25s, background-color 0.25s;
+  }
+
+  .links a:hover {
+    color: var(--text);
+    background: var(--sunken);
+  }
+
+  .links a[data-active] {
+    color: var(--accent-1);
+    background: var(--brand-soft);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+  }
+
+  .toggle {
+    display: grid;
+    place-items: center;
+    inline-size: 2.35rem;
+    block-size: 2.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color 0.25s, transform 0.25s var(--ease);
+  }
+
+  .toggle:hover {
+    border-color: var(--accent-1);
+    transform: translateY(-1px);
+  }
+
+  .toggle svg {
+    grid-area: 1 / 1;
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    transition: opacity 0.3s var(--ease), transform 0.4s var(--ease);
+  }
+
+  .toggle .moon {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.6);
+  }
+
+  [data-theme='dark'] .toggle .sun {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.6);
+  }
+
+  [data-theme='dark'] .toggle .moon {
+    opacity: 1;
+    transform: none;
+  }
+
+  .resume {
+    padding: 0.5rem 1.05rem;
+    font-size: 0.88rem;
+  }
+
+  @media (width <= 46rem) {
+    .who {
+      display: none;
+    }
+  }
+
+  @media (width <= 34rem) {
+    .resume {
+      display: none;
+    }
+  }
+</style>

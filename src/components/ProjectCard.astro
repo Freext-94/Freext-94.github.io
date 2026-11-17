@@ -1,0 +1,261 @@
+---
+import type { Project } from '@/lib/types';
+
+interface Props {
+  project: Project;
+  wide?: boolean;
+  index?: number;
+}
+
+const { project, wide = false, index = 0 } = Astro.props;
+---
+
+<article
+  class:list={['card', 'lift', 'project', { wide }]}
+  data-reveal
+  style={`--i:${index}`}
+>
+  <div class="cover">
+    {
+      /* 图床偶发 404 时直接摘掉 img，让底层的渐变补位，不留破图 */
+      project.image && (
+        <img
+          src={project.image}
+          alt={project.name}
+          loading="lazy"
+          decoding="async"
+          width="800"
+          height="500"
+          onerror="this.remove()"
+        />
+      )
+    }
+    <span class="pattern" aria-hidden="true">{project.name.slice(0, 1)}</span>
+
+    <div class="cover-top">
+      {project.featured && <span class="pill pill-brand">精选</span>}
+      {project.period && <span class="when mono">{project.period}</span>}
+    </div>
+  </div>
+
+  <div class="body">
+    <h3 class="title">{project.name}</h3>
+
+    {project.role && <p class="role">{project.role}</p>}
+
+    <p class="summary">{project.summary}</p>
+
+    {
+      project.detail.length > 0 && (
+        <ul class="detail">
+          {project.detail.map((line) => (
+            <li>{line}</li>
+          ))}
+        </ul>
+      )
+    }
+
+    {
+      (project.tags.length > 0 || project.stack.length > 0) && (
+        <ul class="pills">
+          {[...project.tags, ...project.stack].map((tag) => (
+            <li class="pill">{tag}</li>
+          ))}
+        </ul>
+      )
+    }
+
+    {
+      (project.live || project.repo) && (
+        <div class="links">
+          {project.live && (
+            <a class="btn btn-primary" href={project.live} rel="noopener noreferrer" target="_blank">
+              在线体验
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 5h5v5M19 5l-8 8" />
+                <path d="M12 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+              </svg>
+            </a>
+          )}
+          {project.repo && (
+            <a class="btn btn-ghost" href={project.repo} rel="noopener noreferrer" target="_blank">
+              源码
+            </a>
+          )}
+        </div>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .project {
+    display: grid;
+    overflow: hidden;
+  }
+
+  .cover {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 120% at 12% 8%, var(--bg-tint-1), transparent 60%),
+      radial-gradient(120% 120% at 88% 92%, var(--bg-tint-2), transparent 55%),
+      var(--brand-soft);
+  }
+
+  .cover img {
+    position: relative;
+    z-index: 1;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    transition: transform 0.7s var(--ease);
+  }
+
+  .project:hover .cover img {
+    transform: scale(1.045);
+  }
+
+  /* 没有封面时用首字当图形，卡片不会空一片 */
+  .pattern {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: clamp(3.5rem, 9vw, 5.5rem);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    background: var(--brand);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    opacity: 0.55;
+  }
+
+  .cover img ~ .pattern {
+    display: none;
+  }
+
+  .cover-top {
+    position: absolute;
+    inset: 0.75rem 0.75rem auto 0.75rem;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .cover-top :global(.pill) {
+    background: var(--surface-solid);
+    box-shadow: var(--shadow-card);
+  }
+
+  .when {
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--surface-solid) 82%, transparent);
+    backdrop-filter: blur(6px);
+    font-size: 0.74rem;
+    color: var(--text-muted);
+  }
+
+  .body {
+    display: grid;
+    align-content: start;
+    gap: 0.7rem;
+    padding: clamp(1.15rem, 2.5vw, 1.6rem);
+  }
+
+  .title {
+    font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+  }
+
+  .role {
+    font-size: 0.82rem;
+    font-weight: 640;
+    color: var(--accent-2);
+  }
+
+  .summary {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .detail {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0.15rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.9rem;
+  }
+
+  .detail li {
+    position: relative;
+    padding-inline-start: 1rem;
+    color: var(--text-muted);
+  }
+
+  .detail li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 0.62em;
+    inline-size: 0.34rem;
+    block-size: 0.34rem;
+    border-radius: 2px;
+    background: var(--brand);
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.25rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-block-start: 0.5rem;
+  }
+
+  .links a {
+    padding: 0.42rem 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .links svg {
+    inline-size: 0.95rem;
+    block-size: 0.95rem;
+  }
+
+  /* 宽卡：封面在左，内容在右，用来给第一个精选项目留出分量 */
+  @media (width >= 56rem) {
+    .project.wide {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      grid-column: 1 / -1;
+    }
+
+    .project.wide .cover {
+      aspect-ratio: auto;
+      block-size: 100%;
+      min-block-size: 18rem;
+    }
+
+    .project.wide .body {
+      padding: clamp(1.5rem, 3vw, 2.25rem);
+      align-content: center;
+    }
+
+    .project.wide .title {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+    }
+  }
+</style>

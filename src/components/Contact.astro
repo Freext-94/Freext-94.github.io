@@ -1,0 +1,185 @@
+---
+import SocialIcon from '@/components/SocialIcon.astro';
+import { profile } from '@/data/profile';
+import type { SocialLink } from '@/lib/types';
+
+interface Props {
+  links: SocialLink[];
+}
+
+const { links } = Astro.props;
+---
+
+<div class="card panel">
+  <div class="glow" aria-hidden="true"></div>
+
+  <div class="content">
+    <h3 class="big">
+      一起做点<span class="brand-text">有意思的东西</span>
+    </h3>
+    <p class="lede">
+      {profile.available
+        ? `${profile.availableNote}，聊聊想法或要一份完整简历都可以。`
+        : '如果需要完整简历或想聊聊合作，欢迎直接邮件我。'}
+    </p>
+
+    <div class="actions">
+      <a
+        class="btn btn-primary"
+        href={`mailto:${profile.email}?subject=${encodeURIComponent(`来自 ${profile.name} 主页的来信`)}`}
+      >
+        <SocialIcon icon="mail" label="邮件" />
+        {profile.email}
+      </a>
+      {
+        profile.resumeUrl && (
+          <a class="btn btn-ghost" href={profile.resumeUrl} rel="noopener">
+            下载简历
+          </a>
+        )
+      }
+    </div>
+
+    {
+      links.length > 0 && (
+        <ul class="links">
+          {links.map((link, index) => (
+            <li data-reveal style={`--i:${index}`}>
+              <a
+                href={link.url}
+                class="link"
+                target={link.isEmail ? undefined : '_blank'}
+                rel={link.isEmail ? undefined : 'noopener noreferrer'}
+              >
+                <span class="badge">
+                  <SocialIcon icon={link.icon} label={link.name} />
+                </span>
+                <span class="text">
+                  <span class="name">{link.name}</span>
+                  {link.handle && <span class="handle mono">{link.handle}</span>}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  .panel {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(1.75rem, 4.5vw, 3.25rem);
+  }
+
+  /* 右上角一团缓慢呼吸的品牌色，给整块内容一点纵深 */
+  .glow {
+    position: absolute;
+    inset-block-start: -12rem;
+    inset-inline-end: -8rem;
+    inline-size: 26rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--bg-tint-2), transparent 68%);
+    pointer-events: none;
+    animation: float 12s var(--ease) infinite alternate;
+  }
+
+  @keyframes float {
+    to {
+      transform: translate3d(-2rem, 1.5rem, 0) scale(1.12);
+    }
+  }
+
+  .content {
+    position: relative;
+    display: grid;
+    gap: 1rem;
+    max-inline-size: 46rem;
+  }
+
+  .big {
+    font-size: clamp(1.8rem, 4.4vw, 3rem);
+  }
+
+  .lede {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    max-inline-size: 34rem;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-block-start: 0.75rem;
+  }
+
+  .links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
+    gap: 0.6rem;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .link {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.65rem 0.8rem;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition:
+      border-color 0.3s var(--ease),
+      background-color 0.3s var(--ease),
+      transform 0.3s var(--ease);
+  }
+
+  .link:hover {
+    border-color: var(--border-strong);
+    background: var(--sunken);
+    transform: translateY(-2px);
+  }
+
+  .badge {
+    display: grid;
+    place-items: center;
+    inline-size: 2.1rem;
+    block-size: 2.1rem;
+    border-radius: 0.65rem;
+    border: 1px solid var(--border);
+    background: var(--surface-solid);
+    color: var(--accent-1);
+    flex-shrink: 0;
+    transition: transform 0.35s var(--ease), color 0.3s;
+  }
+
+  .link:hover .badge {
+    transform: rotate(-6deg) scale(1.06);
+    color: var(--accent-2);
+  }
+
+  .text {
+    display: grid;
+    min-inline-size: 0;
+  }
+
+  .name {
+    font-weight: 620;
+    font-size: 0.92rem;
+  }
+
+  .handle {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+</style>

@@ -1,0 +1,168 @@
+---
+import Base from '@/layouts/Base.astro';
+import Section from '@/components/Section.astro';
+import Hero from '@/components/Hero.astro';
+import SkillGrid from '@/components/SkillGrid.astro';
+import ProjectCard from '@/components/ProjectCard.astro';
+import Timeline from '@/components/Timeline.astro';
+import Contact from '@/components/Contact.astro';
+import { profile } from '@/data/profile';
+import { getPortfolio } from '@/lib/notion';
+
+const { projects, skills, experience, links, source } = await getPortfolio();
+
+// 第一个项目若标了「首页展示」就占据整行，作为作品集的门面
+const wideFirst = projects[0]?.featured === true;
+const highlight = wideFirst ? projects[0] : undefined;
+const rest = highlight ? projects.slice(1) : projects;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: profile.name,
+  jobTitle: profile.title,
+  email: `mailto:${profile.email}`,
+  url: new URL(Astro.url.pathname, Astro.site).href,
+  sameAs: links.filter((link) => !link.isEmail).map((link) => link.url),
+  knowsAbout: skills.map((skill) => skill.name),
+};
+
+// 转义 < ，防止字段里出现 </script> 时提前闭合标签
+const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
+---
+
+<Base contentSource={source}>
+  {
+    /* 未配置 Notion 时只在本地开发提示，线上产物不会带这段话 */
+    source === 'sample' && import.meta.env.DEV && (
+      <aside class="notice">
+        <div class="shell">
+          <strong>当前是内置示例数据。</strong> 建好 Notion 数据库并填入{' '}
+          <code>.env.local</code> 后即可切换为真实内容，见 README。
+        </div>
+      </aside>
+    )
+  }
+
+  <Hero
+    projectCount={projects.length}
+    skillCount={skills.length}
+    experienceCount={experience.length}
+  />
+
+  {
+    profile.summary.length > 0 && (
+      <Section
+        id="about"
+        eyebrow="ABOUT"
+        title="关于我"
+        description={profile.title}
+      >
+        <div class="about">
+          {profile.summary.map((paragraph, index) => (
+            <p data-reveal style={`--i:${index}`}>{paragraph}</p>
+          ))}
+        </div>
+      </Section>
+    )
+  }
+
+  {
+    skills.length > 0 && (
+      <Section
+        id="skills"
+        eyebrow="SKILLS"
+        title="技能栈"
+        description="按分类整理，数字是自我评估的熟练度，不是考核结果。"
+      >
+        <SkillGrid skills={skills} />
+      </Section>
+    )
+  }
+
+  {
+    projects.length > 0 && (
+      <Section
+        id="projects"
+        eyebrow="SELECTED WORK"
+        title="作品"
+        description="挑了几个我能讲清楚取舍的项目。完整清单在 Notion 里维护。"
+      >
+        <div class="projects">
+          {highlight && <ProjectCard project={highlight} wide index={0} />}
+          {rest.map((project, index) => (
+            <ProjectCard project={project} index={index + 1} />
+          ))}
+        </div>
+      </Section>
+    )
+  }
+
+  {
+    experience.length > 0 && (
+      <Section
+        id="experience"
+        eyebrow="EXPERIENCE"
+        title="经历"
+        description="工作、实习与教育，按时间倒序。"
+      >
+        <Timeline items={experience} />
+      </Section>
+    )
+  }
+
+  <Section id="contact" eyebrow="CONTACT" title="联系我">
+    <Contact links={links} />
+  </Section>
+</Base>
+
+<script type="application/ld+json" set:html={jsonLdHtml} />
+
+<style>
+  .notice {
+    padding-block: 0.75rem;
+    background: var(--brand-soft);
+    border-block-end: 1px solid var(--border);
+    font-size: 0.88rem;
+  }
+
+  .notice code {
+    padding: 0.1rem 0.35rem;
+    border-radius: 5px;
+    background: var(--sunken);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+  }
+
+  .about {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    gap: clamp(1rem, 3vw, 2.5rem);
+    max-inline-size: 58rem;
+  }
+
+  .about p {
+    position: relative;
+    padding-inline-start: 1.1rem;
+    color: var(--text-muted);
+    font-size: 1.05rem;
+  }
+
+  /* border-image 只能整圈生效，单侧渐变条还是用伪元素稳妥 */
+  .about p::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.2rem;
+    inset-inline-start: 0;
+    inline-size: 2px;
+    border-radius: 2px;
+    background: linear-gradient(to bottom, var(--accent-1), var(--accent-2));
+  }
+
+  .projects {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+    gap: clamp(1.25rem, 3vw, 1.9rem);
+    align-items: stretch;
+  }
+</style>

@@ -1,0 +1,58 @@
+---
+interface Props {
+  id: string;
+  eyebrow: string;
+  title: string;
+  description?: string;
+}
+
+const { id, eyebrow, title, description } = Astro.props;
+---
+
+<section id={id}>
+  <div class="shell">
+    <header class="section-head" data-reveal>
+      <p class="eyebrow">{eyebrow}</p>
+      <h2>
+        {title}
+        <span class="hash" aria-hidden="true">#</span>
+      </h2>
+      {description && <p class="lede">{description}</p>}
+    </header>
+    <slot />
+  </div>
+</section>
+
+<style>
+  /* 文本与 hash 各成一个匿名 flex 项，hash 才能紧跟在文字末尾 */
+  h2 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+
+  .hash {
+    margin-inline-start: 0.35rem;
+    background: var(--brand);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .lede {
+    margin-block-start: 0.35rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .section-head:hover .hash {
+      animation: bounce 0.6s var(--ease);
+    }
+  }
+
+  @keyframes bounce {
+    50% {
+      translate: 0 -0.18em;
+    }
+  }
+</style>

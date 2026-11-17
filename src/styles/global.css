@@ -1,0 +1,422 @@
+/* ── 设计令牌 ─────────────────────────────────────────────
+   亮/暗共用同一套品牌色相，只换背景与对比度，避免切主题像换了个网站。 */
+
+:root {
+  color-scheme: light;
+
+  --bg: #f6f5fb;
+  --bg-tint-1: rgba(124, 58, 237, 0.16);
+  --bg-tint-2: rgba(236, 72, 153, 0.14);
+  --bg-tint-3: rgba(245, 158, 11, 0.12);
+
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-solid: #ffffff;
+  --sunken: rgba(22, 19, 31, 0.04);
+  --text: #16131f;
+  --text-muted: #5c5670;
+  --border: rgba(22, 19, 31, 0.1);
+  --border-strong: rgba(22, 19, 31, 0.16);
+
+  --accent-1: #6d28d9;
+  --accent-2: #db2777;
+  --accent-3: #ea580c;
+  --accent-4: #0891b2;
+
+  --brand: linear-gradient(115deg, var(--accent-1), var(--accent-2) 48%, var(--accent-3));
+  --brand-soft: linear-gradient(115deg, rgba(109, 40, 217, 0.12), rgba(219, 39, 119, 0.12) 50%, rgba(234, 88, 12, 0.12));
+  --glow: rgba(219, 39, 119, 0.28);
+  --shadow-card: 0 1px 2px rgba(22, 19, 31, 0.05), 0 12px 32px -12px rgba(22, 19, 31, 0.14);
+  --shadow-lift: 0 2px 4px rgba(22, 19, 31, 0.06), 0 24px 48px -16px rgba(109, 40, 217, 0.28);
+
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 24px;
+  --shell: 72rem;
+  --ease: cubic-bezier(0.22, 0.68, 0.32, 1);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #09080f;
+  --bg-tint-1: rgba(139, 92, 246, 0.22);
+  --bg-tint-2: rgba(244, 114, 182, 0.18);
+  --bg-tint-3: rgba(251, 191, 36, 0.12);
+
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-solid: #14121e;
+  --sunken: rgba(255, 255, 255, 0.04);
+  --text: #ece9f6;
+  --text-muted: #a49dbf;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  --accent-1: #a78bfa;
+  --accent-2: #f472b6;
+  --accent-3: #fbbf24;
+  --accent-4: #22d3ee;
+
+  --glow: rgba(244, 114, 182, 0.32);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 24px 48px -16px rgba(167, 139, 250, 0.32);
+}
+
+/* ── 基础 ─────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* 锚点跳转时给粘性导航栏让位 */
+  scroll-padding-block-start: 5.5rem;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+/* 极光背景：三团慢速漂移的径向渐变，纯 CSS，不额外加载图片 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -30%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(38rem 38rem at 18% 12%, var(--bg-tint-1), transparent 68%),
+    radial-gradient(32rem 32rem at 82% 8%, var(--bg-tint-2), transparent 66%),
+    radial-gradient(34rem 34rem at 55% 88%, var(--bg-tint-3), transparent 70%);
+  animation: drift 26s var(--ease) infinite alternate;
+}
+
+/* 细颗粒噪点，让大面积渐变不至于发糊 */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.32;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0) scale(1.08);
+  }
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: color-mix(in oklab, var(--text) 30%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: var(--accent-2);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent-2) 30%, transparent);
+}
+
+/* ── 排版 ─────────────────────────────────────────────── */
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.12;
+  letter-spacing: -0.022em;
+  font-weight: 750;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 7.2vw, 4.5rem);
+}
+
+h2 {
+  font-size: clamp(1.75rem, 3.8vw, 2.6rem);
+}
+
+h3 {
+  font-size: 1.18rem;
+  letter-spacing: -0.012em;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.brand-text {
+  background: var(--brand);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  letter-spacing: -0.01em;
+}
+
+/* ── 布局 ─────────────────────────────────────────────── */
+
+.shell {
+  width: min(100% - 2.5rem, var(--shell));
+  margin-inline: auto;
+}
+
+section[id] {
+  padding-block: clamp(4rem, 9vw, 7.5rem);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+  margin-block-end: 0.9rem;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 1.6rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--brand);
+}
+
+.section-head {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 44rem;
+  margin-block-end: clamp(2rem, 4vw, 3.25rem);
+}
+
+.section-head .lede {
+  color: var(--text-muted);
+  font-size: 1.06rem;
+}
+
+/* ── 卡片 ─────────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: var(--shadow-card);
+}
+
+/* hover 时沿边框扫一圈品牌色 */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--brand);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+  pointer-events: none;
+}
+
+.card:hover::after,
+.card:focus-within::after {
+  opacity: 1;
+}
+
+.lift {
+  transition:
+    transform 0.35s var(--ease),
+    box-shadow 0.35s var(--ease);
+}
+
+.lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+
+/* ── 按钮与标签 ───────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.72rem 1.35rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 620;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.25s var(--ease),
+    box-shadow 0.25s var(--ease),
+    border-color 0.25s var(--ease),
+    background-color 0.25s var(--ease);
+}
+
+.btn-primary {
+  background-image: var(--brand);
+  background-size: 160% 160%;
+  color: #fff;
+  box-shadow: 0 10px 28px -10px var(--glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  background-position: 100% 50%;
+  box-shadow: 0 16px 34px -10px var(--glow);
+}
+
+.btn-ghost {
+  border-color: var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  backdrop-filter: blur(10px);
+}
+
+.btn-ghost:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-1);
+  box-shadow: var(--shadow-card);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.66rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--sunken);
+  font-size: 0.78rem;
+  font-weight: 560;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.pill-brand {
+  border-color: color-mix(in oklab, var(--accent-1) 34%, transparent);
+  background: var(--brand-soft);
+  color: var(--accent-1);
+}
+
+[data-theme='dark'] .pill-brand {
+  color: var(--accent-1);
+}
+
+/* ── 进场动画 ─────────────────────────────────────────── */
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s var(--ease),
+    transform 0.7s var(--ease);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* 页脚之上的一层淡出，避免长页面底部发空 */
+.fade-bottom::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 12rem;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  body::before {
+    animation: none;
+  }
+
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
