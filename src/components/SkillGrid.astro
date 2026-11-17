@@ -32,6 +32,7 @@ const groups = skills.reduce<Map<string, Skill[]>>((acc, skill) => {
               <div class="head">
                 <span class="name">{skill.name}</span>
                 {skill.proficiency && <span class="pill pill-brand">{skill.proficiency}</span>}
+                {skill.status && <span class="pill">{skill.status}</span>}
               </div>
               {skill.note && <p class="note">{skill.note}</p>}
             </li>

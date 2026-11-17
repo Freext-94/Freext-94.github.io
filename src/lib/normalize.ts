@@ -180,6 +180,7 @@ export function toSkill(row: NotionRow): Skill {
     category: str(read(row, p.category, 'select')) || '其他',
     proficiency: opt(read(row, p.proficiency, 'select')),
     note: opt(read(row, p.note, 'text')),
+    status: opt(read(row, p.status, 'status')),
     order: num(read(row, p.order, 'number')),
   };
 }
@@ -200,6 +201,7 @@ export function toExperience(row: NotionRow): ExperienceItem {
     current: !end,
     duties: bullets(str(read(row, p.duties, 'text'))),
     achievements: bullets(str(read(row, p.achievements, 'text'))),
+    status: opt(read(row, p.status, 'status')),
     order: num(read(row, p.order, 'number')),
   };
 }
