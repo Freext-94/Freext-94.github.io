@@ -24,8 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 这个 action 内部已经做了 actions/upload-pages-artifact，
+      # 不要再手动加一遍，否则会产生两个 artifact 让 deploy 步骤无所适从
       - name: 构建站点
         uses: withastro/action@v3
+        with:
+          # 该 action 默认装 Node 20，而 Astro 7.4 要求 >= 22.23.4
+          node-version: '22'
         env:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           # 数据库 ID 不算机密，建议放在 Settings → Secrets and variables → Actions → Variables
@@ -34,9 +39,6 @@ jobs:
           NOTION_SKILLS_ID: ${{ vars.NOTION_SKILLS_ID }}
           NOTION_EXPERIENCE_ID: ${{ vars.NOTION_EXPERIENCE_ID }}
           NOTION_ARTICLES_ID: ${{ vars.NOTION_ARTICLES_ID }}
-
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
 
   deploy:
     needs: build
