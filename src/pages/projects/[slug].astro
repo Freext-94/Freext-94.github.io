@@ -54,19 +54,21 @@ const home = import.meta.env.BASE_URL.replace(/\/?$/, '/');
     {
       project.details?.map((block) => {
         if (block.type === 'heading') {
-          const Tag = `h${block.level}` as 'h1' | 'h2' | 'h3';
-          return <Tag class:list={['detail-heading', `level-${block.level}`]}>{block.text}</Tag>;
+          // 页面标题已占用 h1，正文里的 Notion 标题整体下移一级，避免出现两个 h1。
+          // 字号由 .level-N 这个 Notion 层级决定，跟标签无关，所以视觉不变。
+          const Tag = `h${Math.min(block.level + 1, 4)}` as 'h2' | 'h3' | 'h4';
+          return <Tag class:list={['detail-heading', `level-${block.level}`]} set:html={block.html} />;
         }
-        if (block.type === 'paragraph') return <p class="detail-paragraph">{block.text}</p>;
-        if (block.type === 'quote') return <blockquote class="quote">{block.text}</blockquote>;
+        if (block.type === 'paragraph') return <p class="detail-paragraph" set:html={block.html} />;
+        if (block.type === 'quote') return <blockquote class="quote" set:html={block.html} />;
         if (block.type === 'list') {
           const List = block.ordered ? 'ol' : 'ul';
-          return <List class="detail-list">{block.items.map((item) => <li>{item}</li>)}</List>;
+          return <List class="detail-list">{block.items.map((item) => <li set:html={item} />)}</List>;
         }
         if (block.type === 'image') return (
           <figure class="detail-image card">
             <img src={block.url} alt={block.caption || `${project.name} 项目图片`} loading="lazy" />
-            {block.caption && <figcaption>{block.caption}</figcaption>}
+            {block.caption && <figcaption set:html={block.caption} />}
           </figure>
         );
         return null;
@@ -160,6 +162,55 @@ const home = import.meta.env.BASE_URL.replace(/\/?$/, '/');
     color: var(--text-muted);
     line-height: 1.85;
   }
+
+  /*
+   * 正文里的 strong / a / code 是 set:html 注入的，不带 scoped 属性，
+   * 必须用 :global 才选得到；限定在 .detail 之下，避免样式外泄到全站。
+   */
+  .detail :global(strong) {
+    color: var(--text);
+    font-weight: 680;
+  }
+
+  .detail :global(em) {
+    font-style: italic;
+  }
+
+  .detail :global(s) {
+    opacity: 0.6;
+  }
+
+  .detail :global(code) {
+    padding: 0.1rem 0.35rem;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--sunken);
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+  }
+
+  .detail :global(a) {
+    color: var(--accent-1);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--accent-1) 45%, transparent);
+    text-underline-offset: 0.18em;
+    transition: color 0.2s var(--ease);
+  }
+
+  .detail :global(a:hover) {
+    color: var(--accent-2);
+  }
+
+  /* Notion 文字颜色 → 主题变量，保持跟页面同一套色板 */
+  .detail :global([data-color='purple']) { color: var(--accent-1); }
+  .detail :global([data-color='pink']) { color: var(--accent-2); }
+  .detail :global([data-color='orange']) { color: var(--accent-3); }
+  .detail :global([data-color='blue']) { color: var(--accent-4); }
+  .detail :global([data-color='green']) { color: #16a34a; }
+  .detail :global([data-color='yellow']) { color: #b45309; }
+  .detail :global([data-color='red']) { color: #dc2626; }
+  .detail :global([data-color='brown']),
+  .detail :global([data-color='gray']) { color: var(--text-muted); }
 
   .detail-list {
     display: grid;

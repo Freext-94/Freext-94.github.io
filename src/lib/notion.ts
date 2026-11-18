@@ -16,8 +16,8 @@ import {
   toSkill,
   type NotionRow,
 } from './normalize';
-import type { Portfolio } from './types';
-import type { ProjectDetailBlock } from './types';
+import type { Portfolio, ProjectDetailBlock } from './types';
+import { richTextToHtml, type RichTextItem } from './richtext';
 import { SAMPLE_PORTFOLIO } from '@/data/fixtures';
 
 const {
@@ -206,9 +206,9 @@ interface NotionBlock {
   [key: string]: unknown;
 }
 
-function blockText(block: NotionBlock): string {
-  const value = block[block.type] as { rich_text?: Array<{ plain_text?: string }> } | undefined;
-  return (value?.rich_text ?? []).map((item) => item.plain_text ?? '').join('').trim();
+function blockRichText(block: NotionBlock): RichTextItem[] {
+  const value = block[block.type] as { rich_text?: RichTextItem[] } | undefined;
+  return value?.rich_text ?? [];
 }
 
 function imageUrl(block: NotionBlock): string | undefined {
@@ -218,35 +218,48 @@ function imageUrl(block: NotionBlock): string | undefined {
   return value?.external?.url ?? value?.file?.url;
 }
 
-function toProjectDetails(blocks: NotionBlock[]): ProjectDetailBlock[] {
+/**
+ * Notion 页面块 → 详情页块。文字走 richTextToHtml，
+ * 这样你在 Notion 里加的粗体、斜体、链接能原样带到页面上——
+ * 之前只取 plain_text，正文里的强调格式会被压平。
+ */
+function toPageDetails(blocks: NotionBlock[]): ProjectDetailBlock[] {
   const details: ProjectDetailBlock[] = [];
   for (const block of blocks) {
-    const text = blockText(block);
+    const html = richTextToHtml(blockRichText(block));
     if (block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3') {
-      details.push({ type: 'heading', level: Number(block.type.at(-1)) as 1 | 2 | 3, text });
-    } else if (block.type === 'paragraph' && text) {
-      details.push({ type: 'paragraph', text });
-    } else if (block.type === 'quote' && text) {
-      details.push({ type: 'quote', text });
+      details.push({
+        type: 'heading',
+        level: Number(block.type.at(-1)) as 1 | 2 | 3,
+        html,
+      });
+    } else if (block.type === 'paragraph' && html) {
+      details.push({ type: 'paragraph', html });
+    } else if (block.type === 'quote' && html) {
+      details.push({ type: 'quote', html });
     } else if (block.type === 'bulleted_list_item' || block.type === 'numbered_list_item') {
       const ordered = block.type === 'numbered_list_item';
       const previous = details.at(-1);
-      if (previous?.type === 'list' && previous.ordered === ordered) previous.items.push(text);
-      else details.push({ type: 'list', ordered, items: [text] });
+      if (previous?.type === 'list' && previous.ordered === ordered) previous.items.push(html);
+      else details.push({ type: 'list', ordered, items: [html] });
     } else if (block.type === 'image') {
       const url = imageUrl(block);
-      if (url) details.push({ type: 'image', url, caption: blockText(block) || undefined });
+      if (url) details.push({ type: 'image', url, caption: html || undefined });
     }
   }
   return details;
 }
 
-async function readProjectDetails(api: NotionClient, pageId: string): Promise<ProjectDetailBlock[]> {
+/** 读取一行 Notion 页面的正文块；项目详情将来文章详情共用这一套 */
+export async function readPageBlocks(
+  api: NotionClient,
+  pageId: string,
+): Promise<ProjectDetailBlock[]> {
   const blocks = await collectPaginatedAPI(api.blocks.children.list, {
     block_id: pageId,
     page_size: 100,
   });
-  return toProjectDetails(blocks as unknown as NotionBlock[]);
+  return toPageDetails(blocks as unknown as NotionBlock[]);
 }
 
 async function load(): Promise<Portfolio> {
@@ -296,7 +309,7 @@ async function load(): Promise<Portfolio> {
       projects.map(async (project) => {
         if (!project.slug) return;
         const row = srcProjects.rows.find((item) => item.id === project.id);
-        if (row) project.details = await withRetry(project.name, () => readProjectDetails(api, row.id));
+        if (row) project.details = await withRetry(project.name, () => readPageBlocks(api, row.id));
       }),
     );
 

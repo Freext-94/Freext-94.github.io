@@ -44,9 +44,13 @@ export interface Project {
   order: number;
 }
 
+/**
+ * 详情页正文块。html / items 是已经转义并包好标签的片段，
+ * 渲染时必须用 set:html，不能用 {value} 插值（否则会把标签显示出来）。
+ */
 export type ProjectDetailBlock =
-  | { type: 'heading'; level: 1 | 2 | 3; text: string }
-  | { type: 'paragraph' | 'quote'; text: string }
+  | { type: 'heading'; level: 1 | 2 | 3; html: string }
+  | { type: 'paragraph' | 'quote'; html: string }
   | { type: 'list'; ordered: boolean; items: string[] }
   | { type: 'image'; url: string; caption?: string };
 
