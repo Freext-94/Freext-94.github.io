@@ -183,12 +183,18 @@ async function readSource(
 const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order;
 
 /**
- * 分类名按中文拼音升序（zh collation）。
- * 注意 ICU 的 zh 排序把拉丁字母排在汉字之后，所以「AI 应用与自动化」
- * 和「Web 开发与 API 集成」会落在最后，不是最前。
+ * 先按首字母、再按拼音：拉丁开头的分类（AI、Web）排最前并按字母序，
+ * 其余按中文拼音。ICU 的 zh collation 会把拉丁整体排在汉字之后，
+ * 达不到「AI/Web 在最前面」的直觉，所以这里自己分段比较。
  */
-const byCategory = (a: { category: string }, b: { category: string }) =>
-  a.category.localeCompare(b.category, 'zh');
+const startsWithLatin = (value: string) => /^[A-Za-z]/.test(value);
+
+const byCategory = (a: { category: string }, b: { category: string }) => {
+  const aLatin = startsWithLatin(a.category);
+  const bLatin = startsWithLatin(b.category);
+  if (aLatin !== bLatin) return aLatin ? -1 : 1;
+  return a.category.localeCompare(b.category, 'zh');
+};
 
 /** 没填标题的行是库里的占位行，直接丢掉 */
 function hasTitle(row: NotionRow, property: string): boolean {

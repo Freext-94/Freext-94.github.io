@@ -60,7 +60,7 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
       <Section
         id="about"
         eyebrow={dbNames.profile}
-        title="我是谁"
+        title="关于我"
         description={profile.positioning}
       >
         <div class="about">
@@ -102,40 +102,6 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
       </Section>
     )
   }
-
-  <Section
-    id="workflow"
-    eyebrow="BUILD IN PUBLIC"
-    title="这个主页如何运作"
-    description="它既是求职展示窗口，也是一个把内容管理、静态构建与自动部署串起来的完整项目。"
-  >
-    <div class="workflow">
-      <article class="workflow-card card" data-reveal style="--i:0">
-        <span class="workflow-step mono">01 · 内容维护</span>
-        <h3>Notion</h3>
-        <p>在 Profile、Projects、Skills、Experience 和 Articles 数据库维护内容，不必为日常更新修改页面代码。</p>
-      </article>
-      <article class="workflow-card card" data-reveal style="--i:1">
-        <span class="workflow-step mono">02 · 数据读取</span>
-        <h3>Notion API</h3>
-        <p>构建时读取数据库，将 Notion 属性整理成页面使用的数据；状态作为标签展示，内容不因状态被隐藏。</p>
-      </article>
-      <article class="workflow-card card" data-reveal style="--i:2">
-        <span class="workflow-step mono">03 · 静态生成</span>
-        <h3>Astro</h3>
-        <p>把内容预先生成为轻量静态页面，减少运行时服务依赖，兼顾加载速度与维护成本。</p>
-      </article>
-      <article class="workflow-card card" data-reveal style="--i:3">
-        <span class="workflow-step mono">04 · 自动发布</span>
-        <h3>GitHub Actions + Pages</h3>
-        <p>代码推送或定时任务触发构建与部署。整条流程使用免费服务完成上线，无需自建服务器。</p>
-      </article>
-    </div>
-    <p class="workflow-outcome" data-reveal>
-      <strong>项目成果</strong>
-      一个可持续更新的求职主页，以及一套从 Notion 内容管理到 GitHub Pages 发布的低成本自动化流程。
-    </p>
-  </Section>
 
   {
     experience.length > 0 && (
@@ -225,47 +191,6 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
     gap: clamp(1.25rem, 3vw, 1.9rem);
     align-items: stretch;
-  }
-
-  .workflow {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-    gap: clamp(1rem, 2.5vw, 1.5rem);
-  }
-
-  .workflow-card {
-    padding: clamp(1.15rem, 2.5vw, 1.5rem);
-  }
-
-  .workflow-step {
-    color: var(--accent-1);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-  }
-
-  .workflow-card h3 {
-    margin-block: 0.75rem 0.35rem;
-    font-size: 1.08rem;
-  }
-
-  .workflow-card p,
-  .workflow-outcome {
-    color: var(--text-muted);
-    font-size: 0.92rem;
-  }
-
-  .workflow-outcome {
-    margin-block: 1.25rem 0;
-    padding: 1rem 1.2rem;
-    border-inline-start: 3px solid var(--accent-1);
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    background: var(--surface);
-  }
-
-  .workflow-outcome strong {
-    margin-inline-end: 0.5rem;
-    color: var(--text);
   }
 
   .education {
