@@ -56,6 +56,22 @@ const links = [
       </button>
 
       {
+        profile.email && (
+          <a
+            class="toggle mail"
+            href={`mailto:${profile.email}`}
+            aria-label={`发送邮件到 ${profile.email}`}
+            title={profile.email}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2.5" />
+              <path d="M3.5 7l8.5 6 8.5-6" />
+            </svg>
+          </a>
+        )
+      }
+
+      {
         profile.github && (
           <a
             class="btn btn-primary resume"
@@ -241,6 +257,16 @@ const links = [
   .resume svg {
     inline-size: 1rem;
     block-size: 1rem;
+  }
+
+  /* 邮箱沿用 .toggle 的圆形容器样式，只换个强调色 */
+  .mail {
+    color: var(--accent-2);
+    text-decoration: none;
+  }
+
+  .mail:hover {
+    border-color: var(--accent-2);
   }
 
   @media (width <= 46rem) {

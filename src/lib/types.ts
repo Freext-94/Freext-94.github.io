@@ -1,3 +1,12 @@
+/** 社交媒体条目：账号文案用于展示，二维码用于悬浮查看 */
+export interface SocialEntry {
+  key: string;
+  label: string;
+  icon: string;
+  account?: string;
+  qr?: string;
+}
+
 export interface ProfileInfo {
   name: string;
   /** 首屏大字，来自「职业定位」 */
@@ -13,6 +22,8 @@ export interface ProfileInfo {
   gradYear?: number;
   /** 头像为空时用来当圆形徽标 */
   initials: string;
+  /** 只包含至少填了账号或二维码的平台 */
+  socials: SocialEntry[];
 }
 
 export interface Project {

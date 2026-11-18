@@ -1,4 +1,15 @@
-import type { Article, ExperienceItem, ProfileInfo, Project, Skill } from '@/lib/types';
+import type {
+  Article,
+  ExperienceItem,
+  ProfileInfo,
+  Project,
+  Skill,
+} from '@/lib/types';
+
+/** 内联占位二维码，只为验证正反面切换，不依赖外部图片 */
+const QR_PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29"><rect width="29" height="29" fill="#fff"/><g fill="#111"><path fill-rule="evenodd" d="M2 2h9v9H2zM4 4v5h5V4zM18 2h9v9h-9zM20 4v5h5V4zM2 18h9v9H2zM4 20v5h5V20z"/><rect x="14" y="3" width="2" height="2"/><rect x="14" y="7" width="2" height="2"/><rect x="16" y="14" width="2" height="2"/><rect x="20" y="15" width="2" height="2"/><rect x="24" y="18" width="2" height="2"/><rect x="22" y="22" width="2" height="2"/><rect x="26" y="24" width="2" height="2"/><rect x="14" y="20" width="2" height="2"/><rect x="17" y="25" width="2" height="2"/></g></svg>',
+)}`;
 
 /**
  * 未配置 Notion 凭证时的兜底数据，让 `npm run dev` 开箱就能看到布局。
@@ -19,6 +30,11 @@ const profile: ProfileInfo = {
   school: '示例大学',
   gradYear: 2020,
   initials: 'S',
+  socials: [
+    { key: 'wechat', label: '微信', icon: 'wechat', account: 'sample_wx', qr: QR_PLACEHOLDER },
+    // 只填了账号、没有二维码的平台：卡片不翻转，直接显示账号
+    { key: 'douyin', label: '抖音', icon: 'douyin', account: 'sample_douyin' },
+  ],
 };
 
 const projects: Project[] = [

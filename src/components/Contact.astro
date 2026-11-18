@@ -73,8 +73,78 @@ if (profile.github) {
         </ul>
       )
     }
+
+    {
+      profile.socials.length > 0 && (
+        <section class="socials" aria-label="社交媒体">
+          <p class="socials-hint muted">鼠标悬停或点击即可查看二维码</p>
+          <ul class="social-list">
+            {profile.socials.map((s, index) => (
+              <li data-reveal style={`--i:${index}`}>
+                {s.qr ? (
+                  <button
+                    type="button"
+                    class="social"
+                    data-qr
+                    aria-expanded="false"
+                    aria-label={`查看${s.label}二维码`}
+                  >
+                    <span class="face front">
+                      <span class="badge">
+                        <SocialIcon icon={s.icon} label={s.label} />
+                      </span>
+                      <span class="text">
+                        <span class="caption">{s.label}</span>
+                        <span class="label">{s.account ?? '扫码添加'}</span>
+                      </span>
+                    </span>
+                    <span class="face back">
+                      <img src={s.qr} alt={`${s.label}二维码`} loading="lazy" decoding="async" width="220" height="220" />
+                    </span>
+                  </button>
+                ) : (
+                  <div class="social static">
+                    <span class="face front">
+                      <span class="badge">
+                        <SocialIcon icon={s.icon} label={s.label} />
+                      </span>
+                      <span class="text">
+                        <span class="caption">{s.label}</span>
+                        <span class="label">{s.account}</span>
+                      </span>
+                    </span>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
   </div>
 </div>
+
+<script>
+  // 触屏没有 hover，用 aria-expanded 把同一套正反面切换交给点击
+  document.querySelectorAll<HTMLButtonElement>('.social[data-qr]').forEach((tile) => {
+    tile.addEventListener('click', () => {
+      const open = tile.getAttribute('aria-expanded') === 'true';
+      document
+        .querySelectorAll<HTMLButtonElement>('.social[data-qr]')
+        .forEach((other) => other.setAttribute('aria-expanded', 'false'));
+      tile.setAttribute('aria-expanded', String(!open));
+    });
+  });
+
+  // 点到卡片外面时收起，避免二维码一直占着
+  document.addEventListener('click', (event) => {
+    if (!(event.target as Element).closest?.('.social[data-qr]')) {
+      document
+        .querySelectorAll<HTMLButtonElement>('.social[data-qr][aria-expanded="true"]')
+        .forEach((tile) => tile.setAttribute('aria-expanded', 'false'));
+    }
+  });
+</script>
 
 <style>
   .panel {
@@ -182,5 +252,113 @@ if (profile.github) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* ── 社交媒体 ───────────────────────────────────────── */
+
+  .socials {
+    margin-block-start: 1.75rem;
+  }
+
+  .socials-hint {
+    font-size: 0.76rem;
+    margin-block-end: 0.7rem;
+  }
+
+  .social-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /*
+   * 正反面叠在同一个盒子里，二维码始终在卡片自己的边界内出现——
+   * .panel 有 overflow: hidden，往外抛的浮层会被裁掉。
+   */
+  .social {
+    position: relative;
+    display: block;
+    inline-size: 100%;
+    min-block-size: 11rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-solid);
+    font: inherit;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  }
+
+  .social:hover,
+  .social:focus-visible,
+  .social[aria-expanded='true'] {
+    border-color: var(--accent-1);
+    box-shadow: var(--shadow-card);
+  }
+
+  .social.static {
+    cursor: default;
+  }
+
+  .face {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    position: absolute;
+    inset: 0;
+    padding: 1rem;
+    transition: opacity 0.3s var(--ease), transform 0.35s var(--ease);
+  }
+
+  .social.static .face {
+    position: static;
+    min-block-size: 11rem;
+  }
+
+  .back {
+    opacity: 0;
+    transform: scale(0.94);
+    display: grid;
+    place-items: center;
+    background: var(--sunken);
+  }
+
+  .back img {
+    inline-size: min(100%, 9.5rem);
+    aspect-ratio: 1;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .social:hover .front,
+  .social:focus-visible .front,
+  .social[aria-expanded='true'] .front {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  .social:hover .back,
+  .social:focus-visible .back,
+  .social[aria-expanded='true'] .back {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* 没有二维码、只有账号的平台：正面走文档流，不做翻转交互 */
+  .social.static .front {
+    position: static;
+    opacity: 1;
+  }
+
+  .social .badge {
+    flex-shrink: 0;
   }
 </style>

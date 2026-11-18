@@ -5,6 +5,7 @@ import type {
   ProfileInfo,
   Project,
   Skill,
+  SocialEntry,
 } from './types';
 
 /**
@@ -129,6 +130,25 @@ function initials(name: string): string {
   return /^[A-Za-z]/.test(trimmed) ? trimmed[0].toUpperCase() : trimmed.slice(-1);
 }
 
+/**
+ * 加新平台就在这个表里加一行，并在 PROP.profile 补上对应字段；
+ * 账号与二维码都没填的平台不会出现在页面上。
+ */
+const SOCIALS = [
+  { key: 'wechat', label: '微信', icon: 'wechat', account: PROP.profile.wechat, qr: PROP.profile.wechatQr },
+  { key: 'douyin', label: '抖音', icon: 'douyin', account: PROP.profile.douyin, qr: PROP.profile.douyinQr },
+] as const;
+
+function toSocials(row: NotionRow): SocialEntry[] {
+  return SOCIALS.map((s) => ({
+    key: s.key,
+    label: s.label,
+    icon: s.icon,
+    account: opt(read(row, s.account, 'text')),
+    qr: opt(read(row, s.qr, 'url')),
+  })).filter((s) => s.account || s.qr);
+}
+
 export function toProfile(row: NotionRow): ProfileInfo {
   const p = PROP.profile;
   const name = str(read(row, p.name, 'text')) || str(read(row, p.record, 'title'));
@@ -144,6 +164,7 @@ export function toProfile(row: NotionRow): ProfileInfo {
     school: str(read(row, p.school, 'text')) || undefined,
     gradYear: read(row, p.gradYear, 'number') as number | undefined,
     initials: initials(name),
+    socials: toSocials(row),
   };
 }
 

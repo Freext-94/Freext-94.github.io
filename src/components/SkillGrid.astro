@@ -30,7 +30,7 @@ const avg = (items: Skill[]) =>
               <span class="dot" aria-hidden="true"></span>
               {category}
             </h3>
-            <span class="score mono">{avg(items)}</span>
+            <span class="score mono">均值 {avg(items)}</span>
           </header>
 
           {position && <p class="position">{position}</p>}
@@ -38,16 +38,17 @@ const avg = (items: Skill[]) =>
           <ul class="list">
             {items.map((skill, index) => (
               <li class="row" data-reveal style={`--i:${index}`}>
-                <div class="line">
-                  <span class="name">{skill.name}</span>
-                  <span class="value mono">{skill.level}</span>
+                <div class="gauge" style={`--target:${skill.level}`} aria-hidden="true">
+                  <span class="num mono">{skill.level}</span>
                 </div>
-                <span class="track" role="presentation">
-                  <span class="fill" style={`--level:${skill.level}%`}></span>
-                  <span class="sr-only">熟练度 {skill.level}%</span>
-                </span>
-                {skill.note && <p class="note">{skill.note}</p>}
-                {skill.tags.length > 0 && <p class="tags">{skill.tags.join(' · ')}</p>}
+
+                <div class="text">
+                  <p class="name">{skill.name}</p>
+                  {skill.note && <p class="note">{skill.note}</p>}
+                  {skill.tags.length > 0 && (
+                    <p class="tags">{skill.tags.join(' · ')}</p>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
@@ -60,7 +61,7 @@ const avg = (items: Skill[]) =>
 <style>
   .wrap {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(23rem, 1fr));
     gap: clamp(1.25rem, 3vw, 1.9rem);
     align-items: start;
   }
@@ -93,29 +94,22 @@ const avg = (items: Skill[]) =>
     flex-shrink: 0;
   }
 
-  /* 组均值：一眼看出这一类整体在什么水位 */
   .score {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
   }
 
-  .score::before {
-    content: '均值 ';
-    font-family: var(--font-sans);
-    font-size: 0.72rem;
-  }
-
   /* 「技能定位」在同一分类下取值一致，用作分组的一句话说明 */
   .position {
-    margin-block: 0.35rem 1.2rem;
+    margin-block: 0.35rem 1.25rem;
     font-size: 0.83rem;
     color: var(--text-muted);
   }
 
   .list {
     display: grid;
-    gap: 1.15rem;
+    gap: 1.35rem;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -123,62 +117,82 @@ const avg = (items: Skill[]) =>
 
   .row {
     display: grid;
-    gap: 0.35rem;
+    grid-template-columns: var(--gauge-size) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
   }
 
-  .line {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.75rem;
+  /* ── 半环仪表 ───────────────────────────────────────── */
+
+  .gauge {
+    --gauge-size: 5rem;
+    --gauge-stroke: 0.45rem;
+    --level: 0;
+    position: relative;
+    inline-size: var(--gauge-size);
+    /* 半圆 + 环带在直径线上的一点余量，避免描边被裁掉 */
+    block-size: calc(var(--gauge-size) / 2 + var(--gauge-stroke) / 2);
+    transition: --level 1.1s var(--ease) 0.12s;
+  }
+
+  .row.is-visible .gauge {
+    --level: var(--target, 0);
+  }
+
+  /*
+   * from 270deg 让 0 角落在 9 点钟方向，顺时针扫 180° 正好走完上半圆，
+   * 所以 level 每 1 分对应 1.8 度。三段色让填充弧本身走一遍品牌渐变。
+   */
+  .gauge::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inline-size: var(--gauge-size);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 270deg,
+      var(--accent-1) 0deg,
+      var(--accent-2) calc(var(--level) * 0.9deg),
+      var(--accent-3) calc(var(--level) * 1.8deg),
+      color-mix(in oklab, var(--text) 12%, transparent) calc(var(--level) * 1.8deg + 0.001deg)
+    );
+    -webkit-mask: radial-gradient(
+      closest-side,
+      transparent calc(100% - var(--gauge-stroke)),
+      #000 calc(100% - var(--gauge-stroke))
+    );
+    mask: radial-gradient(
+      closest-side,
+      transparent calc(100% - var(--gauge-stroke)),
+      #000 calc(100% - var(--gauge-stroke))
+    );
+    clip-path: inset(0 0 50% 0);
+  }
+
+  /* 数字压在直径线上，正好落在弧的开口处 */
+  .num {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    text-align: center;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text {
+    display: grid;
+    gap: 0.3rem;
+    padding-block-start: 0.1rem;
   }
 
   .name {
-    font-weight: 620;
-    font-size: 0.96rem;
-  }
-
-  .value {
-    font-size: 0.78rem;
-    color: var(--accent-1);
-    font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
-  }
-
-  .track {
-    position: relative;
-    display: block;
-    block-size: 0.42rem;
-    border-radius: 999px;
-    background: var(--sunken);
-    overflow: hidden;
-  }
-
-  .fill {
-    display: block;
-    block-size: 100%;
-    inline-size: 0;
-    border-radius: inherit;
-    background-image: var(--brand);
-    background-size: 200% 100%;
-    transition: inline-size 1.05s var(--ease) 0.15s;
-  }
-
-  /* 进场那一刻才把宽度撑起来，比页面一加载就静止的进度条有精神 */
-  .row.is-visible .fill {
-    inline-size: var(--level, 0%);
-  }
-
-  .sr-only {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
+    font-weight: 640;
+    font-size: 0.98rem;
   }
 
   .note {
@@ -192,5 +206,12 @@ const avg = (items: Skill[]) =>
     font-size: 0.75rem;
     color: var(--text-muted);
     opacity: 0.8;
+  }
+
+  @media (width <= 30rem) {
+    .row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.5rem;
+    }
   }
 </style>
