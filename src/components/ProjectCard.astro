@@ -1,5 +1,6 @@
 ---
 import type { Project } from '@/lib/types';
+import { projectPath } from '@/lib/routes';
 
 interface Props {
   project: Project;
@@ -8,9 +9,7 @@ interface Props {
 }
 
 const { project, wide = false, index = 0 } = Astro.props;
-const projectUrl = project.slug
-  ? `${import.meta.env.BASE_URL.replace(/\/?$/, '/') }projects/${encodeURIComponent(project.slug)}`
-  : undefined;
+const detailUrl = projectPath(project.slug);
 ---
 
 <article
@@ -48,7 +47,7 @@ const projectUrl = project.slug
 
     {project.summary && <p class="summary">{project.summary}</p>}
 
-    {projectUrl && <a class="detail-link" href={projectUrl}>查看项目详情 <span aria-hidden="true">→</span></a>}
+    {detailUrl && <a class="detail-link" href={detailUrl}>查看项目详情 <span aria-hidden="true">→</span></a>}
 
     {
       project.stack.length > 0 && (

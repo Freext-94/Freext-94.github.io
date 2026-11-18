@@ -1,0 +1,300 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getPortfolio, byCategory } from '@/lib/notion';
+import { projectPath, siteRoot } from '@/lib/routes';
+
+const { profile, projects, dbNames } = await getPortfolio();
+
+const title = `全部项目 · ${profile.name}的个人主页`;
+const description = `${projects.length} 个项目的完整清单，按分类分组。`;
+
+// 按分类分组；组内保持「排序」顺序（数据层已排好）
+const groups = projects.reduce<Map<string, typeof projects>>((acc, project) => {
+  const key = project.category?.trim() || '未分类';
+  const list = acc.get(key);
+  if (list) list.push(project);
+  else acc.set(key, [project]);
+  return acc;
+}, new Map());
+
+const ordered = [...groups.entries()].sort(([a], [b]) =>
+  byCategory({ category: a }, { category: b }),
+);
+---
+
+<Base profile={profile} title={title} description={description}>
+  <div class="shell page">
+    <a class="back" href={`${siteRoot()}#projects`}>← 返回首页</a>
+
+    <header class="head">
+      <p class="eyebrow">{dbNames.projects}</p>
+      <h1>
+        全部项目
+        <span class="count mono">{projects.length}</span>
+      </h1>
+      <p class="lede">
+        按分类分组，组内按 Notion 里的「排序」升序。点开任意项目可以看完整过程。
+      </p>
+    </header>
+
+    {
+      ordered.length === 0 && (
+        <p class="empty">项目清单还是空的，去 Notion 的 Projects 库里加几条。</p>
+      )
+    }
+
+    {
+      ordered.map(([category, items], groupIndex) => (
+        <section class="group" data-reveal style={`--i:${groupIndex}`}>
+          <h2 class="group-title">
+            <span class="dot" aria-hidden="true"></span>
+            {category}
+            <span class="count mono">{items.length}</span>
+          </h2>
+
+          <ol class="list">
+            {items.map((project, index) => {
+              const url = projectPath(project.slug);
+              return (
+                <li class="row card lift" data-reveal style={`--i:${index}`}>
+                  <div class="main">
+                    <div class="top">
+                      {url ? (
+                        <a class="name" href={url}>{project.name}</a>
+                      ) : (
+                        <h3 class="name plain">{project.name}</h3>
+                      )}
+                      {project.status && <span class="pill">{project.status}</span>}
+                    </div>
+
+                    {project.summary && <p class="summary">{project.summary}</p>}
+
+                    {
+                      project.stack.length > 0 && (
+                        <ul class="pills">
+                          {project.stack.map((tool) => (
+                            <li class="pill">{tool}</li>
+                          ))}
+                        </ul>
+                      )
+                    }
+                  </div>
+
+                  <div class="side">
+                    {
+                      url ? (
+                        <a class="btn btn-ghost go" href={url}>
+                          查看详情
+                          <span aria-hidden="true">→</span>
+                        </a>
+                      ) : (
+                        <p class="noslug muted">未填 Slug，暂无详情页</p>
+                      )
+                    }
+                    {project.featured && <span class="pick">精选</span>}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .page {
+    padding-block: 2.5rem 5rem;
+  }
+
+  .back {
+    display: inline-block;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.25s, transform 0.25s var(--ease);
+  }
+
+  .back:hover {
+    color: var(--accent-1);
+    transform: translateX(-3px);
+  }
+
+  .head {
+    margin-block: 2rem 3rem;
+    max-inline-size: 44rem;
+  }
+
+  .head h1 {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin-block-end: 0.75rem;
+  }
+
+  .count {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--sunken);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lede {
+    color: var(--text-muted);
+    font-size: 1.02rem;
+  }
+
+  .empty {
+    padding: 2rem;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .group {
+    margin-block-end: 2.75rem;
+  }
+
+  .group-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-block-end: 1.1rem;
+    font-size: 1.15rem;
+  }
+
+  .group-title .dot {
+    inline-size: 0.55rem;
+    block-size: 0.55rem;
+    border-radius: 3px;
+    background: var(--brand);
+    flex-shrink: 0;
+  }
+
+  .group-title .count {
+    margin-inline-start: auto;
+  }
+
+  .list {
+    display: grid;
+    gap: 0.9rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.25rem;
+    align-items: center;
+    padding: 1.15rem 1.3rem;
+  }
+
+  .main {
+    display: grid;
+    gap: 0.5rem;
+    min-inline-size: 0;
+  }
+
+  .top {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .name {
+    font-size: 1.1rem;
+    font-weight: 680;
+    letter-spacing: -0.012em;
+    text-decoration: none;
+    transition: color 0.25s;
+  }
+
+  .name:hover {
+    color: var(--accent-1);
+  }
+
+  /* 没有 Slug 就没有链接，用 h3 保持标题层级但不能点 */
+  .name.plain {
+    margin: 0;
+    color: var(--text);
+  }
+
+  .summary {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0.15rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .side {
+    display: grid;
+    justify-items: end;
+    align-content: center;
+    gap: 0.5rem;
+  }
+
+  .go span {
+    transition: transform 0.3s var(--ease);
+  }
+
+  .go:hover span {
+    transform: translateX(3px);
+  }
+
+  .go {
+    padding: 0.45rem 0.95rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .pick {
+    font-size: 0.72rem;
+    font-weight: 640;
+    color: var(--accent-1);
+  }
+
+  .noslug {
+    font-size: 0.74rem;
+    max-inline-size: 9rem;
+    text-align: end;
+    line-height: 1.5;
+  }
+
+  @media (width <= 40rem) {
+    .row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .side {
+      justify-items: start;
+    }
+
+    .noslug {
+      text-align: start;
+      max-inline-size: none;
+    }
+  }
+</style>

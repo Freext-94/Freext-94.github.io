@@ -8,13 +8,18 @@ import Timeline from '@/components/Timeline.astro';
 import ArticleList from '@/components/ArticleList.astro';
 import Contact from '@/components/Contact.astro';
 import { getPortfolio } from '@/lib/notion';
+import { siteRoot } from '@/lib/routes';
 
 const { profile, projects, skills, experience, articles, dbNames, source } =
   await getPortfolio();
 
-// 第一个项目若标了「精选」就占据整行，作为作品集的门面
-const highlight = projects[0]?.featured ? projects[0] : undefined;
-const rest = highlight ? projects.slice(1) : projects;
+// 首页只放「排序」靠前的 4 个，完整清单在 /projects/
+const HOME_PROJECT_LIMIT = 4;
+const shown = projects.slice(0, HOME_PROJECT_LIMIT);
+// 第一个若标了「精选」就占据整行，作为作品集的门面
+const highlight = shown[0]?.featured ? shown[0] : undefined;
+const rest = highlight ? shown.slice(1) : shown;
+const hasMoreProjects = projects.length > HOME_PROJECT_LIMIT;
 
 const education = [profile.degree, profile.school, profile.gradYear]
   .filter(Boolean)
@@ -91,7 +96,7 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
         id="projects"
         eyebrow={dbNames.projects}
         title="我做过什么"
-        description="展示我解决过的问题、采用的方案与实际成果；完整清单在 Notion 里维护。"
+        description="展示我解决过的问题、采用的方案与实际成果。这里只放排序靠前的几个，完整清单在更多项目里。"
       >
         <div class="projects">
           {highlight && <ProjectCard project={highlight} wide index={0} />}
@@ -99,6 +104,17 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
             <ProjectCard project={project} index={index + 1} />
           ))}
         </div>
+
+        {
+          hasMoreProjects && (
+            <p class="more">
+              <a class="btn btn-ghost" href={`${siteRoot()}projects/`}>
+                更多项目（共 {projects.length} 个）
+                <span aria-hidden="true">→</span>
+              </a>
+            </p>
+          )
+        }
       </Section>
     )
   }
@@ -191,6 +207,20 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
     gap: clamp(1.25rem, 3vw, 1.9rem);
     align-items: stretch;
+  }
+
+  .more {
+    display: flex;
+    justify-content: center;
+    margin-block-start: clamp(1.75rem, 4vw, 2.75rem);
+  }
+
+  .more a span {
+    transition: transform 0.3s var(--ease);
+  }
+
+  .more a:hover span {
+    transform: translateX(3px);
   }
 
   .education {

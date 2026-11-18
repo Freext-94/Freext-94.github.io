@@ -189,7 +189,7 @@ const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order;
  */
 const startsWithLatin = (value: string) => /^[A-Za-z]/.test(value);
 
-const byCategory = (a: { category: string }, b: { category: string }) => {
+export const byCategory = (a: { category: string }, b: { category: string }) => {
   const aLatin = startsWithLatin(a.category);
   const bLatin = startsWithLatin(b.category);
   if (aLatin !== bLatin) return aLatin ? -1 : 1;
