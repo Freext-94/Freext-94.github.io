@@ -60,11 +60,11 @@ const projects: Project[] = [
 ];
 
 const skills: Skill[] = [
-  { id: 's1', name: '示例技能 A', category: '分组一', proficiency: '熟练', note: '这里显示「具体说明」字段。', order: 1 },
-  { id: 's2', name: '示例技能 B', category: '分组一', note: '「熟悉程度」没填就不显示徽章。', order: 2 },
-  { id: 's3', name: '示例技能 C', category: '分组二', proficiency: '掌握', note: '技能按分类自动分组。', order: 3 },
-  { id: 's4', name: '示例技能 D', category: '分组二', order: 4 },
-  { id: 's5', name: '示例技能 E', category: '分组三', proficiency: '了解', order: 5 },
+  { id: 's1', name: '示例技能 A', category: '分组一', position: '既有职业能力', level: 85, note: '这里显示 Notion「技能描述」字段的内容。', tags: ['标签一', '标签二'] },
+  { id: 's2', name: '示例技能 B', category: '分组一', position: '既有职业能力', level: 70, note: '「技能定位」在同一分类下取值一致，用作分组的一句话描述。', tags: [] },
+  { id: 's3', name: '示例技能 C', category: '分组二', position: '当前技术探索方向', level: 55, note: '进度条长度来自「熟悉程度」百分比字段。', tags: ['标签三'] },
+  { id: 's4', name: '示例技能 D', category: '分组二', position: '当前技术探索方向', level: 40, tags: [] },
+  { id: 's5', name: '示例技能 E', category: '分组三', position: '辅助技能', level: 65, note: '未配置 Notion 时看到的是这份占位数据，内容与真实库无关。', tags: ['标签四', '标签五'] },
 ];
 
 const experience: ExperienceItem[] = [

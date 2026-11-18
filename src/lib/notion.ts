@@ -8,6 +8,7 @@ import {
   type CollectionKey,
 } from './schema';
 import {
+  isHidden,
   toArticle,
   toExperience,
   toProfile,
@@ -65,11 +66,12 @@ function notionId(input: string): string {
  * 只有明确「找不到这个数据源」才退一步按数据库 ID 解析。
  * 网络故障必须原样抛出，否则会被 databases.retrieve 误报成 object_not_found。
  */
-function collectRows(api: NotionClient, data_source_id: string): Promise<NotionRow[]> {
-  return collectPaginatedAPI(api.dataSources.query, {
+async function collectRows(api: NotionClient, data_source_id: string): Promise<NotionRow[]> {
+  const rows = await collectPaginatedAPI(api.dataSources.query, {
     data_source_id,
     page_size: 100,
-  }).then((rows) => rows as unknown as NotionRow[]);
+  });
+  return rows as unknown as NotionRow[];
 }
 
 function isObjectNotFound(error: unknown): boolean {
@@ -238,13 +240,16 @@ async function load(): Promise<Portfolio> {
     return {
       profile: toProfile(profileRow),
       projects,
+      // Skills 库没有排序字段：按熟练度降序排，分组时分类自然按各自最强项排序
       skills: skillRows
         .filter((row) => hasTitle(row, PROP.skills.title))
+        .filter((row) => !isHidden(row, PROP.skills.visible))
         .map(toSkill)
-        .sort(byOrder),
+        .sort((a, b) => b.level - a.level),
       // 库里 排序 1 就是最近一段，升序即倒序时间线
       experience: experienceRows
         .filter((row) => hasTitle(row, PROP.experience.company))
+        .filter((row) => !isHidden(row, PROP.experience.visible))
         .map(toExperience)
         .sort(byOrder),
       articles: articleRows

@@ -2,6 +2,7 @@
 import Nav from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
 import type { ProfileInfo } from '@/lib/types';
+import '@fontsource-variable/noto-sans-sc';
 import '../styles/global.css';
 
 interface Props {
@@ -14,11 +15,13 @@ interface Props {
 const {
   profile,
   contentSource = 'notion',
-  title = profile.positioning
-    ? `${profile.name} · ${profile.positioning}`
-    : profile.name,
+  title,
   description = profile.summary[0] ?? '个人主页与作品集。',
 } = Astro.props;
+
+/** 站名跟着 Notion 的「姓名」走，改名不用动代码 */
+const siteName = `${profile.name}的个人主页`;
+const heading = title ?? `${siteName} · ${profile.positioning}`;
 
 // trailingSlash 为 ignore 时 BASE_URL 不带尾斜杠，直接拼接会少一个 /
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
@@ -30,7 +33,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
+    <title>{heading}</title>
     <meta name="description" content={description} />
     <meta name="author" content={profile.name} />
     <link rel="canonical" href={canonical} />
@@ -39,10 +42,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="theme-color" content="#09080f" media="(prefers-color-scheme: dark)" />
 
     <meta property="og:type" content="profile" />
-    <meta property="og:title" content={title} />
+    <meta property="og:title" content={heading} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
-    <meta property="og:site_name" content={profile.name} />
+    <meta property="og:site_name" content={siteName} />
     {profile.avatar && <meta property="og:image" content={profile.avatar} />}
     <meta name="twitter:card" content={profile.avatar ? 'summary_large_image' : 'summary'} />
 

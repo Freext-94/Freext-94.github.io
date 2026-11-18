@@ -34,8 +34,12 @@
   --shell: 72rem;
   --ease: cubic-bezier(0.22, 0.68, 0.32, 1);
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  /*
+   * 思源黑体自托管在包里（@fontsource-variable），不走 Google Fonts——国内取不到。
+   * font-display: swap 保证字体下载期间先用系统字渲染，不出现空白首屏。
+   */
+  --font-sans: 'Noto Sans SC Variable', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
 }
 

@@ -20,7 +20,6 @@ const { items } = Astro.props;
           <div class="head">
             <h3>{item.company}</h3>
             <span class="period mono">{item.period}</span>
-            {item.status && <span class="pill">{item.status}</span>}
           </div>
 
           {item.role && <p class="role">{item.role}</p>}

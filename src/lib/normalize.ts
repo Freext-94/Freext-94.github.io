@@ -172,16 +172,28 @@ export function toProject(row: NotionRow): Project {
   };
 }
 
+/**
+ * 「是否展示」取消即隐藏。属性本身不存在时视为可见——
+ * 否则字段一旦被删掉，整个区块会莫名清空。
+ */
+export function isHidden(row: NotionRow, property: string): boolean {
+  const prop = row.properties[property];
+  if (!prop) return false;
+  return prop.checkbox === false;
+}
+
 export function toSkill(row: NotionRow): Skill {
   const p = PROP.skills;
+  const raw = num(read(row, p.level, 'number'));
   return {
     id: row.id,
     name: str(read(row, p.title, 'title')),
     category: str(read(row, p.category, 'select')) || '其他',
-    proficiency: opt(read(row, p.proficiency, 'select')),
+    position: opt(read(row, p.position, 'select')),
+    // Notion 百分比格式返回 0.85，手工填 85 也认
+    level: raw > 1 ? Math.min(100, Math.round(raw)) : Math.round(raw * 100),
     note: opt(read(row, p.note, 'text')),
-    status: opt(read(row, p.status, 'status')),
-    order: num(read(row, p.order, 'number')),
+    tags: arr(read(row, p.tags, 'multi_select')),
   };
 }
 
@@ -201,7 +213,6 @@ export function toExperience(row: NotionRow): ExperienceItem {
     current: !end,
     duties: bullets(str(read(row, p.duties, 'text'))),
     achievements: bullets(str(read(row, p.achievements, 'text'))),
-    status: opt(read(row, p.status, 'status')),
     order: num(read(row, p.order, 'number')),
   };
 }
@@ -216,7 +227,6 @@ export function toArticle(row: NotionRow): Article {
     category: opt(read(row, p.category, 'select')),
     tags: arr(read(row, p.tags, 'multi_select')),
     image,
-    slug: opt(read(row, p.slug, 'text')),
     featured: bool(read(row, p.featured, 'checkbox')),
     publishedAt: opt(read(row, p.publishedAt, 'created_time')),
     status: opt(read(row, p.status, 'status')),

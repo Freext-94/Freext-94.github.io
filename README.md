@@ -1,4 +1,4 @@
-# Freext-94 个人主页
+# Freext的个人主页
 
 基于 Astro 的静态个人主页，使用 Notion 管理内容，并通过 GitHub Actions 发布到 GitHub Pages。
 
@@ -50,13 +50,15 @@ NOTION_ARTICLES_ID=
 | --- | --- | --- |
 | Profile | 资料名称（标题）、姓名、职业定位、个人简介、所在城市、联系邮箱、GitHub、头像、学历、毕业院校、毕业年份 | 个人资料。页面使用第一条记录；姓名为空时使用资料名称兜底。 |
 | Projects | 项目名称（标题）、摘要、分类、技术栈、封面图片、演示地址、GitHub、Slug、发布状态、精选项目、排序 | 项目卡片、标签、链接与排序。 |
-| Skills | 技能（标题）、分类、熟悉程度、具体说明、发布状态、排序 | 技能分组和状态标签。分类为空时归入「其他」。 |
-| Experience | 公司名称（标题）、职位、开始时间、结束时间、工作职责、工作成果、发布状态、排序 | 工作时间线和状态标签。结束时间为空时显示「至今」。 |
-| Articles | 文章标题（标题）、摘要、分类、标签、封面图片、Slug、精选文章、发布时间、发布状态、排序 | 文章列表和状态标签。发布时间当前读取页面创建时间。 |
+| Skills | 技能（标题）、分类、技能定位、熟悉程度、技能描述、技能标签、是否展示 | 技能分组、进度条与描述。分类为空时归入「其他」；熟悉程度为百分比数字（`0.85` 与 `85` 两种写法都识别）。 |
+| Experience | 公司名称（标题）、职位、开始时间、结束时间、工作职责、工作成果、是否展示、排序 | 工作时间线。结束时间为空时显示「至今」。工作职责与工作成果支持一行一条，也支持整段用句号分隔。 |
+| Articles | 文章标题（标题）、摘要、分类、标签、封面图片、精选文章、发布时间、发布状态、排序 | 文章列表。发布时间读取页面创建时间。无文章时整个区块不渲染。 |
 
-Projects、Skills、Experience、Articles 的「发布状态」使用 Notion Status 属性，页面显示 Notion 返回的状态名称原文。各库的选项由 Notion 数据库自身管理；修改选项时请以数据库中的实际结构和值为准。当前网站不根据状态筛选记录。
+Projects 与 Articles 的「发布状态」使用 Notion Status 属性，页面显示状态名称原文；Skills 与 Experience 库没有该字段，页面上也不显示状态标签。选项由 Notion 数据库自身管理，修改时以数据库实际取值为准。当前网站不根据状态筛选记录。
 
-排序字段按升序排列；Experience 中排序较小的记录会更早显示。无标题的内容记录会被忽略。可选字段留空时，对应内容或标签会省略。
+「是否展示」取消勾选后，该条技能或经历不会出现在页面上。字段本身被删除时视为全部可见，避免误清空整个区块。
+
+Skills 库没有排序字段，技能按熟悉程度降序排列，分类顺序取该分类下最高熟练度，因此最强的能力会排在前面。Experience 的排序字段按升序排列，值越小越早显示。Projects 与 Articles 按排序字段升序。无标题的内容记录会被忽略。
 
 ### 图片
 
@@ -93,6 +95,8 @@ npm run notion:setup -- --check  # 检查 Notion 数据库
 | 页面区块与首页文案 | `src/pages/index.astro` |
 | Notion 字段名与数据库结构 | `src/lib/schema.ts` |
 | 页面配色、字体和样式变量 | `src/styles/global.css` |
+| 字体（思源黑体，自托管） | `src/layouts/Base.astro` 的 `@fontsource-variable/noto-sans-sc` 导入与 `--font-sans` |
+| 站点名称 | `src/layouts/Base.astro` 的 `siteName`，取自 Notion「姓名」，格式为 `<姓名>的个人主页` |
 | 导航链接 | `src/components/Nav.astro` |
 | 本地示例数据 | `src/data/fixtures.ts` |
 | GitHub Pages 工作流 | `.github/workflows/deploy.yml` |

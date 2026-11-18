@@ -42,10 +42,12 @@ export interface Skill {
   id: string;
   name: string;
   category: string;
-  proficiency?: string;
+  /** 「技能定位」，同一个分类下取值一致，用作分组的一句话描述 */
+  position?: string;
+  /** 「熟悉程度」百分比字段，0–100 */
+  level: number;
   note?: string;
-  status?: string;
-  order: number;
+  tags: string[];
 }
 
 export interface ExperienceItem {
@@ -59,7 +61,6 @@ export interface ExperienceItem {
   current: boolean;
   duties: string[];
   achievements: string[];
-  status?: string;
   order: number;
 }
 
@@ -70,7 +71,6 @@ export interface Article {
   category?: string;
   tags: string[];
   image?: string;
-  slug?: string;
   featured: boolean;
   /** ISO 日期，来自 created_time */
   publishedAt?: string;

@@ -55,10 +55,11 @@ export const PROP = {
   skills: {
     title: '技能',
     category: '分类',
-    proficiency: '熟悉程度',
-    note: '具体说明',
-    status: '发布状态',
-    order: '排序',
+    position: '技能定位',
+    level: '熟悉程度',
+    note: '技能描述',
+    tags: '技能标签',
+    visible: '是否展示',
   },
   experience: {
     company: '公司名称',
@@ -67,7 +68,7 @@ export const PROP = {
     end: '结束时间',
     duties: '工作职责',
     achievements: '工作成果',
-    status: '发布状态',
+    visible: '是否展示',
     order: '排序',
   },
   articles: {
@@ -76,7 +77,6 @@ export const PROP = {
     category: '分类',
     tags: '标签',
     image: '封面图片',
-    slug: 'Slug',
     featured: '精选文章',
     publishedAt: '发布时间',
     status: '发布状态',
@@ -84,8 +84,15 @@ export const PROP = {
   },
 } as const satisfies Record<string, Record<string, string>>;
 
-const PROFICIENCY = ['精通', '熟练', '掌握', '了解'];
-const STATUSES = ['未开始', '进行中', '已发布'];
+const SKILL_POSITIONS = [
+  '既有职业能力',
+  '职业经验沉淀',
+  '当前技术探索方向',
+  '个人项目实践',
+  '实际动手能力',
+  '辅助技能',
+];
+const STATUSES = ['未开始', '进行中', '完成'];
 
 export const COLLECTIONS = {
   profile: {
@@ -131,10 +138,11 @@ export const COLLECTIONS = {
     properties: {
       [PROP.skills.title]: { kind: 'title' },
       [PROP.skills.category]: { kind: 'select' },
-      [PROP.skills.proficiency]: { kind: 'select', options: PROFICIENCY },
+      [PROP.skills.position]: { kind: 'select', options: SKILL_POSITIONS },
+      [PROP.skills.level]: { kind: 'number', format: 'percent' },
       [PROP.skills.note]: { kind: 'text' },
-      [PROP.skills.status]: { kind: 'status', options: STATUSES },
-      [PROP.skills.order]: { kind: 'number', format: 'number' },
+      [PROP.skills.tags]: { kind: 'multi_select' },
+      [PROP.skills.visible]: { kind: 'checkbox' },
     },
   },
   experience: {
@@ -148,7 +156,7 @@ export const COLLECTIONS = {
       [PROP.experience.end]: { kind: 'date' },
       [PROP.experience.duties]: { kind: 'text' },
       [PROP.experience.achievements]: { kind: 'text' },
-      [PROP.experience.status]: { kind: 'status', options: STATUSES },
+      [PROP.experience.visible]: { kind: 'checkbox' },
       [PROP.experience.order]: { kind: 'number', format: 'number' },
     },
   },
@@ -162,7 +170,6 @@ export const COLLECTIONS = {
       [PROP.articles.category]: { kind: 'select' },
       [PROP.articles.tags]: { kind: 'multi_select' },
       [PROP.articles.image]: { kind: 'url' },
-      [PROP.articles.slug]: { kind: 'text' },
       [PROP.articles.featured]: { kind: 'checkbox' },
       [PROP.articles.publishedAt]: { kind: 'created_time' },
       [PROP.articles.status]: { kind: 'status', options: STATUSES },
