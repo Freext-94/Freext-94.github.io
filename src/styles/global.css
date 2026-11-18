@@ -378,12 +378,16 @@ section[id] {
 
 /*
  * 注册成 <number> 才能参与 transition——未注册的自定义属性是不可插值的字符串，
- * 半环只会在进场瞬间跳到位而不是扫出来。不支持 @property 的浏览器
+ * 圆环只会在进场瞬间跳到位而不是扫出来。不支持 @property 的浏览器
  * 会退化成静态显示（Chrome/Edge 85+、Safari 16.4+、Firefox 128+ 才有动画）。
+ *
+ * inherits 必须是 true：--level 设在 .gauge 上，渐变却用在 .gauge::before 上。
+ * 写成 false 时伪元素拿不到父元素的值、只会得到 initial-value: 0，
+ * 结果是圆环永远一圈灰、没有填充弧。
  */
 @property --level {
   syntax: '<number>';
-  inherits: false;
+  inherits: true;
   initial-value: 0;
 }
 

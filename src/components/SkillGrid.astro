@@ -59,14 +59,19 @@ const avg = (items: Skill[]) =>
 </div>
 
 <style>
+  /*
+   * 用多列而不是 grid：grid 的等高行会让内容少的分组提前结束，
+   * 下方留出一大块空白，下一行还得等最高的那张。分组条目数从 1 到 4
+   * 差异很大，瀑布流才能把它们紧凑排下来。
+   */
   .wrap {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(23rem, 1fr));
-    gap: clamp(1.25rem, 3vw, 1.9rem);
-    align-items: start;
+    column-width: 23rem;
+    column-gap: clamp(1.25rem, 3vw, 1.9rem);
   }
 
   .group {
+    break-inside: avoid;
+    margin-block-end: clamp(1.25rem, 3vw, 1.9rem);
     padding: clamp(1.25rem, 2.5vw, 1.7rem);
   }
 
