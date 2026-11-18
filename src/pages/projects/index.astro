@@ -5,7 +5,7 @@ import { projectPath, siteRoot } from '@/lib/routes';
 
 const { profile, projects, dbNames } = await getPortfolio();
 
-const title = `全部项目 · ${profile.name}的个人主页`;
+const title = `作品集 · ${profile.name}的个人主页`;
 const description = `${projects.length} 个项目的完整清单，按分类分组。`;
 
 // 按分类分组；组内保持「排序」顺序（数据层已排好）
@@ -29,7 +29,7 @@ const ordered = [...groups.entries()].sort(([a], [b]) =>
     <header class="head">
       <p class="eyebrow">{dbNames.projects}</p>
       <h1>
-        全部项目
+        作品集
         <span class="count mono">{projects.length}</span>
       </h1>
       <p class="lede">
@@ -57,6 +57,28 @@ const ordered = [...groups.entries()].sort(([a], [b]) =>
               const url = projectPath(project.slug);
               return (
                 <li class="row card lift" data-reveal style={`--i:${index}`}>
+                  {/*
+                    封面不做成链接：项目名和右侧按钮已经是两个入口，
+                    再加一个只会让整行到处可点。
+                  */}
+                  <div class="cover" aria-hidden="true">
+                    {
+                      /* 图床偶发 404 时摘掉 img，露出底层的渐变首字 */
+                      project.image && (
+                        <img
+                          src={project.image}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          width="400"
+                          height="300"
+                          onerror="this.remove()"
+                        />
+                      )
+                    }
+                    <span class="pattern">{project.name.slice(0, 1)}</span>
+                  </div>
+
                   <div class="main">
                     <div class="top">
                       {url ? (
@@ -193,10 +215,55 @@ const ordered = [...groups.entries()].sort(([a], [b]) =>
 
   .row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: 11rem minmax(0, 1fr) auto;
     gap: 1.25rem;
     align-items: center;
     padding: 1.15rem 1.3rem;
+  }
+
+  /* 封面：和首页卡片同一套兜底——没图就用首字配品牌渐变 */
+  .cover {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background:
+      radial-gradient(120% 120% at 12% 8%, var(--bg-tint-1), transparent 60%),
+      radial-gradient(120% 120% at 88% 92%, var(--bg-tint-2), transparent 55%),
+      var(--brand-soft);
+  }
+
+  .cover img {
+    position: relative;
+    z-index: 1;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    transition: transform 0.7s var(--ease);
+  }
+
+  .row:hover .cover img {
+    transform: scale(1.06);
+  }
+
+  .pattern {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 2.6rem;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    background: var(--brand);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    opacity: 0.55;
+  }
+
+  .cover img ~ .pattern {
+    display: none;
   }
 
   .main {
@@ -285,10 +352,16 @@ const ordered = [...groups.entries()].sort(([a], [b]) =>
 
   @media (width <= 40rem) {
     .row {
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns: 6.5rem minmax(0, 1fr);
+    }
+
+    /* 窄屏下封面缩成正方形，按钮换行到内容下方 */
+    .cover {
+      aspect-ratio: 1;
     }
 
     .side {
+      grid-column: 2;
       justify-items: start;
     }
 
