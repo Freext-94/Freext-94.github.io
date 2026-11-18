@@ -1,0 +1,210 @@
+---
+import type { ProjectDetailBlock } from '@/lib/types';
+
+interface Props {
+  blocks?: ProjectDetailBlock[];
+  projectName: string;
+}
+
+const { blocks, projectName } = Astro.props;
+---
+
+{
+  blocks?.map((block) => {
+    if (block.type === 'heading') {
+      // 页面标题已占用 h1，正文里的 Notion 标题整体下移一级，避免出现两个 h1。
+      // 字号由 .level-N 这个 Notion 层级决定，跟标签无关，所以视觉不变。
+      const Tag = `h${Math.min(block.level + 1, 4)}` as 'h2' | 'h3' | 'h4';
+      return <Tag class:list={['detail-heading', `level-${block.level}`]} set:html={block.html} />;
+    }
+    if (block.type === 'paragraph') return <p class="detail-paragraph" set:html={block.html} />;
+    if (block.type === 'quote') return <blockquote class="quote" set:html={block.html} />;
+    if (block.type === 'list') {
+      const List = block.ordered ? 'ol' : 'ul';
+      return <List class="detail-list">{block.items.map((item) => <li set:html={item} />)}</List>;
+    }
+    if (block.type === 'image') {
+      return (
+        <figure class="detail-image card">
+          <img src={block.url} alt={block.caption || `${projectName} 项目图片`} loading="lazy" />
+          {block.caption && <figcaption set:html={block.caption} />}
+        </figure>
+      );
+    }
+    if (block.type === 'embed') {
+      return (
+        <figure class="detail-embed">
+          <iframe
+            src={block.url}
+            title={`${projectName} · 内嵌图表`}
+            loading="lazy"
+            referrerpolicy="no-referrer"
+          />
+        </figure>
+      );
+    }
+    if (block.type === 'code') {
+      return (
+        <pre class="detail-code" data-language={block.language}><code>{block.text}</code></pre>
+      );
+    }
+    if (block.type === 'divider') return <hr class="detail-divider" />;
+    return null;
+  })
+}
+
+<style>
+  .detail-heading {
+    max-inline-size: 48rem;
+    margin-block: 2rem 0.65rem;
+  }
+
+  .detail-heading.level-1 { font-size: 1.6rem; }
+  .detail-heading.level-2 { font-size: 1.3rem; }
+  .detail-heading.level-3 { font-size: 1.08rem; }
+
+  .detail-paragraph,
+  .detail-list,
+  .quote {
+    max-inline-size: 48rem;
+    color: var(--text-muted);
+    line-height: 1.85;
+  }
+
+  /*
+   * 正文里的 strong / a / code 是 set:html 注入的，不带 scoped 属性，
+   * 必须用 :global 才选得到；限定在正文组件内，避免样式外泄到全站。
+   */
+  :global(.detail strong),
+  :global(.detail b) {
+    color: var(--text);
+    font-weight: 680;
+  }
+
+  :global(.detail em) {
+    font-style: italic;
+  }
+
+  :global(.detail s) {
+    opacity: 0.6;
+  }
+
+  :global(.detail code) {
+    padding: 0.1rem 0.35rem;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--sunken);
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+  }
+
+  :global(.detail a) {
+    color: var(--accent-1);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--accent-1) 45%, transparent);
+    text-underline-offset: 0.18em;
+    transition: color 0.2s var(--ease);
+  }
+
+  :global(.detail a:hover) {
+    color: var(--accent-2);
+  }
+
+  /* Notion 文字颜色 → 主题变量，保持跟页面同一套色板 */
+  :global(.detail [data-color='purple']) { color: var(--accent-1); }
+  :global(.detail [data-color='pink']) { color: var(--accent-2); }
+  :global(.detail [data-color='orange']) { color: var(--accent-3); }
+  :global(.detail [data-color='blue']) { color: var(--accent-4); }
+  :global(.detail [data-color='green']) { color: #16a34a; }
+  :global(.detail [data-color='yellow']) { color: #b45309; }
+  :global(.detail [data-color='red']) { color: #dc2626; }
+  :global(.detail [data-color='brown']),
+  :global(.detail [data-color='gray']) { color: var(--text-muted); }
+
+  .detail-list {
+    display: grid;
+    gap: 0.4rem;
+    padding-inline-start: 1.5rem;
+  }
+
+  .quote {
+    margin-inline: 0;
+    padding: 0.75rem 1rem;
+    border-inline-start: 3px solid var(--accent-1);
+    background: var(--surface);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .detail-image {
+    max-inline-size: 54rem;
+    margin-block: 1.5rem;
+    overflow: hidden;
+  }
+
+  .detail-image img {
+    inline-size: 100%;
+    max-block-size: 38rem;
+    object-fit: contain;
+  }
+
+  .detail-image figcaption {
+    padding: 0.65rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+  }
+
+  /* Notion embed：自托管 HTML 用 iframe 嵌进来，保持 12:7 的画布比例 */
+  .detail-embed {
+    max-inline-size: 54rem;
+    margin-block: 1.75rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .detail-embed iframe {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: 12 / 7;
+    border: 0;
+  }
+
+  .detail-code {
+    max-inline-size: 48rem;
+    margin-block: 1.5rem;
+    padding: 1rem 1.15rem;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--sunken);
+    font-family: var(--font-mono);
+    font-size: 0.84rem;
+    line-height: 1.75;
+  }
+
+  /* 覆盖正文里行内 code 的底色和边框，代码块里不需要 */
+  :global(.detail .detail-code code) {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font-size: inherit;
+    white-space: pre;
+  }
+
+  .detail-divider {
+    max-inline-size: 48rem;
+    margin-block: 2rem;
+    border: 0;
+    border-block-start: 1px solid var(--border);
+  }
+
+  /* 手机上架构图按整幅缩放会看不清，改成可横向拖动 */
+  @media (max-width: 40rem) {
+    .detail-embed iframe {
+      aspect-ratio: auto;
+      block-size: 22rem;
+    }
+  }
+</style>

@@ -25,7 +25,7 @@ const links = [
       <span class="who">{profile.name}</span>
     </a>
 
-    <nav aria-label="页面导航">
+    <nav class="desktop-nav" aria-label="页面导航">
       <ul class="links">
         {
           links.map((link) => (
@@ -38,6 +38,19 @@ const links = [
         }
       </ul>
     </nav>
+
+    <button
+      type="button"
+      class="menu-toggle"
+      aria-label="打开导航菜单"
+      aria-expanded="false"
+      aria-controls="mobile-nav"
+      data-menu-toggle
+    >
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </button>
 
     <div class="actions">
       <button
@@ -86,18 +99,33 @@ const links = [
       }
     </div>
   </div>
+
+  <div class="mobile-nav" id="mobile-nav" hidden>
+    <ul>
+      {
+        links.map((link) => (
+          <li>
+            <a href={link.href}>{link.label}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
 </header>
 
 <script>
   const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]')];
+  // href 是 "/#about" 这种绝对路径，直接 querySelector 会抛非法选择器，
+  // 高亮比较也必须只看 hash，否则永远对不上。
+  const hashOf = (el: HTMLAnchorElement) => new URL(el.href).hash;
   const sections = links
-    .map((link) => document.querySelector(link.getAttribute('href')!))
+    .map((link) => document.querySelector(hashOf(link)))
     .filter((el): el is HTMLElement => el !== null);
 
   if (links.length && sections.length) {
     const setActive = (id: string) => {
       links.forEach((link) =>
-        link.toggleAttribute('data-active', link.getAttribute('href') === `#${id}`),
+        link.toggleAttribute('data-active', hashOf(link) === `#${id}`),
       );
     };
 
@@ -113,6 +141,24 @@ const links = [
     );
 
     sections.forEach((section) => observer.observe(section));
+  }
+
+  // 移动端折叠菜单：点链接后立即收起，避免跳转后菜单还开着
+  const menuToggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const menuPanel = document.getElementById('mobile-nav');
+  if (menuToggle && menuPanel) {
+    menuToggle.addEventListener('click', () => {
+      const open = menuToggle.getAttribute('aria-expanded') === 'true';
+      menuToggle.setAttribute('aria-expanded', String(!open));
+      menuPanel.hidden = open;
+    });
+
+    menuPanel.querySelectorAll('a').forEach((link) =>
+      link.addEventListener('click', () => {
+        menuToggle.setAttribute('aria-expanded', 'false');
+        menuPanel.hidden = true;
+      }),
+    );
   }
 </script>
 
@@ -165,6 +211,12 @@ const links = [
     font-size: 1rem;
   }
 
+  /* nav 是 flex 项，默认最小宽度等于内容宽度，窄屏会把右侧按钮顶出视口 */
+  .inner > nav {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
   .links {
     display: flex;
     align-items: center;
@@ -175,6 +227,8 @@ const links = [
     overflow-x: auto;
     scrollbar-width: none;
     margin-inline: auto;
+    /* 不加这行，flex 项的最小宽度等于内容宽度，窄屏会把右侧按钮顶出视口 */
+    min-inline-size: 0;
   }
 
   .links::-webkit-scrollbar {
@@ -269,9 +323,76 @@ const links = [
     border-color: var(--accent-2);
   }
 
+  /* 窄屏收起文字链接，换成折叠菜单，避免导航把右侧按钮顶出屏幕 */
+  .menu-toggle {
+    display: none;
+    place-items: center;
+    gap: 4px;
+    inline-size: 2.35rem;
+    block-size: 2.35rem;
+    margin-inline-start: auto;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    cursor: pointer;
+  }
+
+  .menu-toggle span {
+    display: block;
+    inline-size: 1rem;
+    block-size: 1.5px;
+    border-radius: 2px;
+    background: var(--text);
+  }
+
+  .mobile-nav {
+    display: none;
+  }
+
   @media (width <= 46rem) {
     .who {
       display: none;
+    }
+
+    .desktop-nav {
+      display: none;
+    }
+
+    .menu-toggle {
+      display: grid;
+    }
+
+    .mobile-nav:not([hidden]) {
+      display: block;
+      position: absolute;
+      inset-inline: 0;
+      inset-block-start: 100%;
+      padding: 0.5rem clamp(1rem, 4vw, 1.5rem) 1rem;
+      border-block-end: 1px solid var(--border);
+      background: color-mix(in oklab, var(--bg) 94%, transparent);
+      backdrop-filter: blur(16px);
+    }
+
+    .mobile-nav ul {
+      display: grid;
+      gap: 0.15rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .mobile-nav a {
+      display: block;
+      padding: 0.65rem 0.75rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      text-decoration: none;
+    }
+
+    .mobile-nav a:active {
+      background: var(--sunken);
+      color: var(--text);
     }
   }
 

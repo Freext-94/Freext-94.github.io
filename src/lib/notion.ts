@@ -218,6 +218,20 @@ function imageUrl(block: NotionBlock): string | undefined {
   return value?.external?.url ?? value?.file?.url;
 }
 
+/** embed 块既可能是网页，也可能是视频；只取我们需要的 url */
+function embedUrl(block: NotionBlock): string | undefined {
+  const value = block.embed as { url?: string } | undefined;
+  return value?.url;
+}
+
+/** code 块要的是纯文本，不能走 richTextToHtml —— 代码里的 < 必须原样显示 */
+function plainRichText(items: RichTextItem[] | undefined): string {
+  return (items ?? [])
+    .map((item) => item.plain_text ?? '')
+    .join('')
+    .replace(/\n+$/, '');
+}
+
 /**
  * Notion 页面块 → 详情页块。文字走 richTextToHtml，
  * 这样你在 Notion 里加的粗体、斜体、链接能原样带到页面上——
@@ -245,6 +259,18 @@ function toPageDetails(blocks: NotionBlock[]): ProjectDetailBlock[] {
     } else if (block.type === 'image') {
       const url = imageUrl(block);
       if (url) details.push({ type: 'image', url, caption: html || undefined });
+    } else if (block.type === 'embed') {
+      // 自托管的 HTML（比如架构图）走 embed 块，页面里用 iframe 渲染
+      const url = embedUrl(block);
+      if (url) details.push({ type: 'embed', url });
+    } else if (block.type === 'code') {
+      const text = plainRichText(blockRichText(block));
+      if (text.trim()) {
+        const language = (block.code as { language?: string } | undefined)?.language;
+        details.push({ type: 'code', language, text });
+      }
+    } else if (block.type === 'divider') {
+      details.push({ type: 'divider' });
     }
   }
   return details;

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>项目封面 · Notion + GitHub Pages 个人主页</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    position: relative;
+    background: #09080f;
+    color: #ece9f6;
+    font-family: 'Microsoft YaHei UI', 'PingFang SC', system-ui, sans-serif;
+    padding: 64px 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .glow-a, .glow-b, .glow-c { position: absolute; border-radius: 50%; filter: blur(10px); }
+  .glow-a { width: 620px; height: 620px; left: -180px; top: -260px; background: radial-gradient(circle, rgba(139,92,246,.36), transparent 62%); }
+  .glow-b { width: 560px; height: 560px; right: -140px; top: -120px; background: radial-gradient(circle, rgba(244,114,182,.26), transparent 64%); }
+  .glow-c { width: 520px; height: 520px; right: 120px; bottom: -300px; background: radial-gradient(circle, rgba(251,191,36,.18), transparent 64%); }
+  .top, .bottom { position: relative; display: flex; justify-content: space-between; align-items: center; }
+  .eyebrow { font-size: 15px; letter-spacing: .24em; color: #a49dbf; }
+  .badge { font-size: 14px; color: #9be8f5; border: 1px solid rgba(34,211,238,.34); background: rgba(34,211,238,.08); padding: 8px 16px; border-radius: 999px; }
+  .middle { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 56px; }
+  h1 { font-size: 66px; line-height: 1.12; letter-spacing: -.03em; font-weight: 700; }
+  h1 .grad { background: linear-gradient(110deg, #a78bfa, #f472b6 52%, #fbbf24); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { margin-top: 20px; font-size: 22px; color: #a49dbf; letter-spacing: .02em; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+  .chip { font-size: 15px; color: #cfc9e4; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); padding: 8px 14px; border-radius: 10px; }
+  .portrait { position: relative; width: 264px; height: 264px; flex: none; }
+  .ring { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 210deg, #a78bfa, #f472b6, #fbbf24, #22d3ee, #a78bfa); }
+  .photo { position: absolute; inset: 8px; border-radius: 50%; overflow: hidden; background: #14121e; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .url { font-family: ui-monospace, Consolas, monospace; font-size: 16px; color: #8b84a6; }
+  .stats { display: flex; gap: 28px; font-size: 15px; color: #a49dbf; }
+  .stats b { color: #ece9f6; font-size: 20px; font-weight: 600; margin-right: 6px; }
+</style>
+</head>
+<body>
+  <div class="glow-a"></div>
+  <div class="glow-b"></div>
+  <div class="glow-c"></div>
+
+  <div class="top">
+    <span class="eyebrow">PERSONAL PORTFOLIO</span>
+    <span class="badge">0 服务器 · 0 元 / 月</span>
+  </div>
+
+  <div class="middle">
+    <div>
+      <h1>Notion + GitHub Pages<br /><span class="grad">个人主页</span></h1>
+      <p class="sub">改内容不用改代码，让简历自己更新</p>
+      <div class="chips">
+        <span class="chip">Astro</span>
+        <span class="chip">Notion API</span>
+        <span class="chip">GitHub Actions</span>
+        <span class="chip">GitHub Pages</span>
+      </div>
+    </div>
+    <div class="portrait">
+      <div class="ring"></div>
+      <div class="photo"><img src="../../avatar.png" alt="" /></div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <span class="url">freext-94.github.io</span>
+    <div class="stats">
+      <span><b>5</b>项目</span>
+      <span><b>12</b>技能</span>
+      <span><b>4</b>经历</span>
+    </div>
+  </div>
+</body>
+</html>

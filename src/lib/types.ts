@@ -52,7 +52,11 @@ export type ProjectDetailBlock =
   | { type: 'heading'; level: 1 | 2 | 3; html: string }
   | { type: 'paragraph' | 'quote'; html: string }
   | { type: 'list'; ordered: boolean; items: string[] }
-  | { type: 'image'; url: string; caption?: string };
+  | { type: 'image'; url: string; caption?: string }
+  /** Notion embed：页面里渲染成 iframe，用来嵌自托管的 HTML 架构图 */
+  | { type: 'embed'; url: string; caption?: string }
+  | { type: 'code'; language?: string; text: string }
+  | { type: 'divider' };
 
 export interface Skill {
   id: string;

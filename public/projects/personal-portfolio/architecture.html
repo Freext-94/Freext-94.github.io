@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Notion + GitHub Pages 个人主页 · 架构图</title>
+<style>
+  :root {
+    --bg: #0b0a12;
+    --panel: rgba(255, 255, 255, 0.025);
+    --panel-2: rgba(255, 255, 255, 0.05);
+    --line: rgba(255, 255, 255, 0.12);
+    --line-soft: rgba(255, 255, 255, 0.07);
+    --text: #ece9f6;
+    --muted: #a49dbf;
+    --dim: #736d8c;
+    --purple: #a78bfa;
+    --pink: #f472b6;
+    --amber: #fbbf24;
+    --cyan: #22d3ee;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); }
+  body {
+    padding: clamp(8px, 2vw, 20px);
+    font-family: 'Noto Sans SC Variable', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  .frame {
+    border: 1px solid var(--line-soft);
+    border-radius: 18px;
+    background:
+      radial-gradient(900px 420px at 12% -10%, rgba(167, 139, 250, 0.12), transparent 62%),
+      radial-gradient(760px 380px at 92% 108%, rgba(244, 114, 182, 0.1), transparent 60%),
+      var(--bg);
+    overflow: hidden;
+  }
+  svg { display: block; width: 100%; height: auto; }
+  @media (max-width: 720px) {
+    body { overflow-x: auto; }
+    .frame { min-width: 880px; }
+  }
+
+  .node { transition: transform 0.25s ease, opacity 0.25s ease; }
+  .node:hover { transform: translateY(-2px); }
+  @media (prefers-reduced-motion: reduce) {
+    .node { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+<svg viewBox="0 0 1200 700" role="img" aria-labelledby="arch-title arch-desc">
+  <title id="arch-title">Notion + GitHub Pages 个人主页的系统架构</title>
+  <desc id="arch-desc">内容层是 Notion 的五个数据库，构建层由 Astro 在 GitHub Actions 中读取并映射数据，产出静态文件后经 GitHub Pages 分发给访客。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+    </marker>
+  </defs>
+
+  <text x="48" y="58" font-size="27" font-weight="600" fill="var(--text)">系统架构</text>
+  <text x="48" y="86" font-size="13.5" fill="var(--muted)">Notion 存内容 · Astro 在构建时取数 · GitHub Pages 只发静态文件</text>
+
+  <g>
+    <rect x="892" y="34" width="260" height="42" rx="21" fill="rgba(34, 211, 238, 0.08)" stroke="rgba(34, 211, 238, 0.35)" />
+    <text x="1022" y="60" text-anchor="middle" font-size="13" fill="#9be8f5">0 服务器 · 0 数据库 · 0 元 / 月</text>
+  </g>
+
+  <!-- 01 内容层 -->
+  <rect x="32" y="112" width="1136" height="128" rx="14" fill="var(--panel)" stroke="var(--line-soft)" />
+  <text x="56" y="140" font-size="11.5" letter-spacing="1.6" fill="var(--dim)">01 内容层</text>
+  <text x="56" y="163" font-size="13" fill="var(--muted)">NOTION · 人工维护</text>
+
+  <g class="node">
+    <rect x="258" y="136" width="160" height="80" rx="10" fill="rgba(167, 139, 250, 0.10)" stroke="rgba(167, 139, 250, 0.42)" />
+    <circle cx="276" cy="156" r="3.5" fill="var(--purple)" />
+    <text x="288" y="161" font-size="14" font-weight="600" fill="var(--text)">Profile</text>
+    <text x="276" y="186" font-size="12" fill="var(--muted)">1 条 · 13 字段</text>
+    <text x="276" y="204" font-size="11.5" fill="var(--dim)">姓名 / 简介 / 社交</text>
+  </g>
+  <g class="node">
+    <rect x="430" y="136" width="160" height="80" rx="10" fill="rgba(244, 114, 182, 0.10)" stroke="rgba(244, 114, 182, 0.42)" />
+    <circle cx="448" cy="156" r="3.5" fill="var(--pink)" />
+    <text x="460" y="161" font-size="14" font-weight="600" fill="var(--text)">Projects</text>
+    <text x="448" y="186" font-size="12" fill="var(--muted)">5 条 · 11 字段</text>
+    <text x="448" y="204" font-size="11.5" fill="var(--dim)">封面 / 技术栈 / Slug</text>
+  </g>
+  <g class="node">
+    <rect x="602" y="136" width="160" height="80" rx="10" fill="rgba(251, 191, 36, 0.10)" stroke="rgba(251, 191, 36, 0.42)" />
+    <circle cx="620" cy="156" r="3.5" fill="var(--amber)" />
+    <text x="632" y="161" font-size="14" font-weight="600" fill="var(--text)">Skills</text>
+    <text x="620" y="186" font-size="12" fill="var(--muted)">17 条 · 7 字段</text>
+    <text x="620" y="204" font-size="11.5" fill="var(--dim)">分类 / 熟练度</text>
+  </g>
+  <g class="node">
+    <rect x="774" y="136" width="160" height="80" rx="10" fill="rgba(34, 211, 238, 0.10)" stroke="rgba(34, 211, 238, 0.42)" />
+    <circle cx="792" cy="156" r="3.5" fill="var(--cyan)" />
+    <text x="804" y="161" font-size="14" font-weight="600" fill="var(--text)">Experience</text>
+    <text x="792" y="186" font-size="12" fill="var(--muted)">4 条 · 8 字段</text>
+    <text x="792" y="204" font-size="11.5" fill="var(--dim)">起止 / 职责 / 成果</text>
+  </g>
+  <g class="node">
+    <rect x="946" y="136" width="160" height="80" rx="10" fill="rgba(255, 255, 255, 0.04)" stroke="var(--line)" />
+    <circle cx="964" cy="156" r="3.5" fill="var(--dim)" />
+    <text x="976" y="161" font-size="14" font-weight="600" fill="var(--text)">Articles</text>
+    <text x="964" y="186" font-size="12" fill="var(--muted)">0 条 · 10 字段</text>
+    <text x="964" y="204" font-size="11.5" fill="var(--dim)">空库 · 区块不渲染</text>
+  </g>
+
+  <path d="M600 240 L600 292" fill="none" stroke="var(--purple)" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="614" y="272" font-size="11.5" fill="var(--dim)">构建时一次性读取 · page_size 100</text>
+
+  <!-- 02 构建层 -->
+  <rect x="32" y="298" width="1136" height="170" rx="14" fill="var(--panel)" stroke="var(--line-soft)" />
+  <text x="56" y="326" font-size="11.5" letter-spacing="1.6" fill="var(--dim)">02 构建层</text>
+  <text x="56" y="349" font-size="13" fill="var(--muted)">ASTRO · 只在 CI 里跑一次</text>
+
+  <g class="node">
+    <rect x="258" y="322" width="280" height="94" rx="10" fill="var(--panel-2)" stroke="var(--line)" />
+    <text x="278" y="350" font-size="14" font-weight="600" fill="var(--purple)">notion.ts</text>
+    <text x="278" y="374" font-size="12" fill="var(--muted)">查询数据源 · 解析 ID / 链接</text>
+    <text x="278" y="394" font-size="11.5" fill="var(--dim)">IPv4 优先 · 5 次退避重试</text>
+  </g>
+  <path d="M542 369 L566 369" fill="none" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arrow)" />
+  <g class="node">
+    <rect x="570" y="322" width="280" height="94" rx="10" fill="var(--panel-2)" stroke="var(--line)" />
+    <text x="590" y="350" font-size="14" font-weight="600" fill="var(--pink)">normalize.ts</text>
+    <text x="590" y="374" font-size="12" fill="var(--muted)">属性 → 业务对象</text>
+    <text x="590" y="394" font-size="11.5" fill="var(--dim)">过滤空标题 · 排序 · 富文本转义</text>
+  </g>
+  <path d="M854 369 L878 369" fill="none" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arrow)" />
+  <g class="node">
+    <rect x="882" y="322" width="280" height="94" rx="10" fill="var(--panel-2)" stroke="var(--line)" />
+    <text x="902" y="350" font-size="14" font-weight="600" fill="var(--amber)">pages/</text>
+    <text x="902" y="374" font-size="12" fill="var(--muted)">首页 · 作品集 · [slug] 详情</text>
+    <text x="902" y="394" font-size="11.5" fill="var(--dim)">getStaticPaths 预生成路由</text>
+  </g>
+  <text x="258" y="446" font-size="11.5" fill="var(--dim)">配置缺失时直接失败，不用示例数据发布；访客请求不经过 Notion，也不消耗 API 配额。</text>
+
+  <path d="M1022 468 L1022 500" fill="none" stroke="var(--amber)" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- 03 交付层 -->
+  <rect x="32" y="506" width="1136" height="150" rx="14" fill="var(--panel)" stroke="var(--line-soft)" />
+  <text x="56" y="534" font-size="11.5" letter-spacing="1.6" fill="var(--dim)">03 交付层</text>
+  <text x="56" y="557" font-size="13" fill="var(--muted)">GITHUB · 自动化</text>
+
+  <g class="node">
+    <rect x="258" y="528" width="232" height="98" rx="10" fill="rgba(167, 139, 250, 0.10)" stroke="rgba(167, 139, 250, 0.38)" />
+    <text x="276" y="556" font-size="13.5" font-weight="600" fill="var(--text)">GitHub Actions</text>
+    <text x="276" y="580" font-size="11.5" fill="var(--muted)">配置检查 → check → build</text>
+    <text x="276" y="600" font-size="11.5" fill="var(--dim)">push main / 每日 02:00</text>
+  </g>
+  <path d="M494 577 L514 577" fill="none" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arrow)" />
+  <g class="node">
+    <rect x="518" y="528" width="232" height="98" rx="10" fill="rgba(244, 114, 182, 0.10)" stroke="rgba(244, 114, 182, 0.38)" />
+    <text x="536" y="556" font-size="13.5" font-weight="600" fill="var(--text)">dist/</text>
+    <text x="536" y="580" font-size="11.5" fill="var(--muted)">静态 HTML + CSS</text>
+    <text x="536" y="600" font-size="11.5" fill="var(--dim)">自托管字体 · _astro 资源</text>
+  </g>
+  <path d="M754 577 L774 577" fill="none" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arrow)" />
+  <g class="node">
+    <rect x="778" y="528" width="232" height="98" rx="10" fill="rgba(251, 191, 36, 0.10)" stroke="rgba(251, 191, 36, 0.38)" />
+    <text x="796" y="556" font-size="13.5" font-weight="600" fill="var(--text)">GitHub Pages</text>
+    <text x="796" y="580" font-size="11.5" fill="var(--muted)">全球 CDN 分发</text>
+    <text x="796" y="600" font-size="11.5" fill="var(--dim)">freext-94.github.io</text>
+  </g>
+  <path d="M1014 577 L1034 577" fill="none" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arrow)" />
+  <g class="node">
+    <rect x="1038" y="528" width="104" height="98" rx="10" fill="rgba(34, 211, 238, 0.10)" stroke="rgba(34, 211, 238, 0.38)" />
+    <text x="1090" y="570" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">访客</text>
+    <text x="1090" y="592" text-anchor="middle" font-size="11.5" fill="var(--dim)">浏览器</text>
+  </g>
+
+  <text x="48" y="682" font-size="11.5" fill="var(--dim)">一次内容更新的完整路径：Notion 编辑 → 触发构建 → 取数渲染 → 上传产物 → CDN 生效；本机构建约 10 秒，CI 通常一两分钟。</text>
+</svg>
+</div>
+</body>
+</html>

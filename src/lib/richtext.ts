@@ -58,7 +58,9 @@ export function richTextToHtml(items: RichTextItem[] | undefined): string {
 }
 
 function renderItem(item: RichTextItem): string {
-  let html = escapeHtml(item.plain_text ?? '');
+  // 转义后再把换行变成 <br>：Notion 里 Shift+Enter 的软换行，
+  // 不处理的话在 HTML 里会被折叠成一个空格。
+  let html = escapeHtml(item.plain_text ?? '').replace(/\r?\n/g, '<br />');
   if (!html) return '';
 
   const a = item.annotations;
