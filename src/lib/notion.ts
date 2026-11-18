@@ -110,14 +110,18 @@ function isTransient(error: unknown): boolean {
 
 /** fetch 层面的连接失败不在 SDK 的重试范围内，这里补一层 */
 async function withRetry<T>(label: string, run: () => Promise<T>): Promise<T> {
-  const attempts = 3;
+  // 一次构建要打十几个请求，本机到 Notion 的链路又偶发抖动，
+  // 只重试两次的话整站构建很容易因为一次抽风就失败
+  const attempts = 5;
   for (let attempt = 1; ; attempt += 1) {
     try {
       return await run();
     } catch (error) {
       if (attempt >= attempts || !isTransient(error)) throw error;
-      console.warn(`[notion] ${label} 第 ${attempt} 次请求失败，重试中…`);
-      await new Promise((r) => setTimeout(r, attempt * 800));
+      console.warn(
+        `[notion] ${label} 第 ${attempt}/${attempts} 次请求失败，${attempt * 600}ms 后重试…`,
+      );
+      await new Promise((r) => setTimeout(r, attempt * 600));
     }
   }
 }

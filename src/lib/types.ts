@@ -1,10 +1,9 @@
-/** 社交媒体条目：账号文案用于展示，二维码用于悬浮查看 */
+/** 社交媒体条目：库里每个平台一个 URL 字段，存二维码图片直链 */
 export interface SocialEntry {
   key: string;
   label: string;
   icon: string;
-  account?: string;
-  qr?: string;
+  qr: string;
 }
 
 export interface ProfileInfo {

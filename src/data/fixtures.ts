@@ -31,9 +31,8 @@ const profile: ProfileInfo = {
   gradYear: 2020,
   initials: 'S',
   socials: [
-    { key: 'wechat', label: '微信', icon: 'wechat', account: 'sample_wx', qr: QR_PLACEHOLDER },
-    // 只填了账号、没有二维码的平台：卡片不翻转，直接显示账号
-    { key: 'douyin', label: '抖音', icon: 'douyin', account: 'sample_douyin' },
+    { key: 'wechat', label: '微信', icon: 'wechat', qr: QR_PLACEHOLDER },
+    { key: 'douyin', label: '抖音', icon: 'douyin', qr: QR_PLACEHOLDER },
   ],
 };
 

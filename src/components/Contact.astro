@@ -81,40 +81,38 @@ if (profile.github) {
           <ul class="social-list">
             {profile.socials.map((s, index) => (
               <li data-reveal style={`--i:${index}`}>
-                {s.qr ? (
-                  <button
-                    type="button"
-                    class="social"
-                    data-qr
-                    aria-expanded="false"
-                    aria-label={`查看${s.label}二维码`}
-                  >
-                    <span class="face front">
-                      <span class="badge">
-                        <SocialIcon icon={s.icon} label={s.label} />
-                      </span>
-                      <span class="text">
-                        <span class="caption">{s.label}</span>
-                        <span class="label">{s.account ?? '扫码添加'}</span>
-                      </span>
+                <button
+                  type="button"
+                  class="social"
+                  data-qr
+                  aria-expanded="false"
+                  aria-label={`查看${s.label}二维码`}
+                >
+                  <span class="face front">
+                    <span class="badge">
+                      <SocialIcon icon={s.icon} label={s.label} />
                     </span>
-                    <span class="face back">
-                      <img src={s.qr} alt={`${s.label}二维码`} loading="lazy" decoding="async" width="220" height="220" />
+                    <span class="text">
+                      <span class="caption">{s.label}</span>
+                      <span class="label">扫码添加</span>
                     </span>
-                  </button>
-                ) : (
-                  <div class="social static">
-                    <span class="face front">
-                      <span class="badge">
-                        <SocialIcon icon={s.icon} label={s.label} />
-                      </span>
-                      <span class="text">
-                        <span class="caption">{s.label}</span>
-                        <span class="label">{s.account}</span>
-                      </span>
-                    </span>
-                  </div>
-                )}
+                  </span>
+                  <span class="face back">
+                    {/*
+                      图床链接失效时（返回 HTML 而非图片）标记 data-broken，
+                      让正面保持可见——否则悬浮会翻出一块空白。
+                    */}
+                    <img
+                      src={s.qr}
+                      alt={`${s.label}二维码`}
+                      loading="lazy"
+                      decoding="async"
+                      width="220"
+                      height="220"
+                      onerror="this.closest('.social').dataset.broken = 'true'"
+                    />
+                  </span>
+                </button>
               </li>
             ))}
           </ul>
@@ -267,7 +265,9 @@ if (profile.github) {
 
   .social-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    /* 二维码本身只有 9.5rem，卡片拉满整行会留下大片空白 */
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 15rem));
+    justify-content: start;
     gap: 0.6rem;
     margin: 0;
     padding: 0;
@@ -302,8 +302,20 @@ if (profile.github) {
     box-shadow: var(--shadow-card);
   }
 
-  .social.static {
+  /* 二维码取不到时不再翻转，正面一直显示，避免翻出一块空白 */
+  .social[data-broken] {
     cursor: default;
+  }
+
+  .social[data-broken] .back {
+    visibility: hidden;
+  }
+
+  .social[data-broken]:hover .front,
+  .social[data-broken]:focus-visible .front,
+  .social[data-broken][aria-expanded='true'] .front {
+    opacity: 1;
+    transform: none;
   }
 
   .face {
@@ -315,11 +327,6 @@ if (profile.github) {
     inset: 0;
     padding: 1rem;
     transition: opacity 0.3s var(--ease), transform 0.35s var(--ease);
-  }
-
-  .social.static .face {
-    position: static;
-    min-block-size: 11rem;
   }
 
   .back {
@@ -350,12 +357,6 @@ if (profile.github) {
   .social[aria-expanded='true'] .back {
     opacity: 1;
     transform: none;
-  }
-
-  /* 没有二维码、只有账号的平台：正面走文档流，不做翻转交互 */
-  .social.static .front {
-    position: static;
-    opacity: 1;
   }
 
   .social .badge {

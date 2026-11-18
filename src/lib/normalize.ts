@@ -132,21 +132,20 @@ function initials(name: string): string {
 
 /**
  * 加新平台就在这个表里加一行，并在 PROP.profile 补上对应字段；
- * 账号与二维码都没填的平台不会出现在页面上。
+ * 二维码没填的平台不会出现在页面上。
  */
 const SOCIALS = [
-  { key: 'wechat', label: '微信', icon: 'wechat', account: PROP.profile.wechat, qr: PROP.profile.wechatQr },
-  { key: 'douyin', label: '抖音', icon: 'douyin', account: PROP.profile.douyin, qr: PROP.profile.douyinQr },
+  { key: 'wechat', label: '微信', icon: 'wechat', qr: PROP.profile.wechatQr },
+  { key: 'douyin', label: '抖音', icon: 'douyin', qr: PROP.profile.douyinQr },
 ] as const;
 
 function toSocials(row: NotionRow): SocialEntry[] {
-  return SOCIALS.map((s) => ({
-    key: s.key,
-    label: s.label,
-    icon: s.icon,
-    account: opt(read(row, s.account, 'text')),
-    qr: opt(read(row, s.qr, 'url')),
-  })).filter((s) => s.account || s.qr);
+  const entries: SocialEntry[] = [];
+  for (const s of SOCIALS) {
+    const qr = opt(read(row, s.qr, 'url'));
+    if (qr) entries.push({ key: s.key, label: s.label, icon: s.icon, qr });
+  }
+  return entries;
 }
 
 export function toProfile(row: NotionRow): ProfileInfo {
