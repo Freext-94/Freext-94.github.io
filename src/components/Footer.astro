@@ -20,6 +20,10 @@ const builtAt = new Date().toLocaleString('zh-CN', {
       © {year} {profile.name}
       <span class="sep" aria-hidden="true">·</span>
       <span class="muted">{`Astro 构建，内容来自${source === 'notion' ? ' Notion' : '示例数据'}`}</span>
+      <span class="sep" aria-hidden="true">·</span>
+      <span class="views" data-views>
+        访问 <span id="busuanzi_value_site_pv"></span> 次 · <span id="busuanzi_value_site_uv"></span> 位访客
+      </span>
     </p>
 
     <p class="built muted mono" title={builtAt}>build {builtAt}</p>
@@ -59,6 +63,21 @@ const builtAt = new Date().toLocaleString('zh-CN', {
     color: var(--text-muted);
   }
 
+  /*
+   * 访问量由不蒜子脚本填充。脚本被拦截或服务不可用时，
+   * 数字一直是空的，所以先藏起来，等拿到纯数字再显示。
+   */
+  .views {
+    display: none;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--text-muted);
+  }
+
+  .views.is-ready {
+    display: inline-flex;
+  }
+
   .built {
     font-size: 0.76rem;
   }
@@ -92,3 +111,20 @@ const builtAt = new Date().toLocaleString('zh-CN', {
     }
   }
 </style>
+
+<script is:inline>
+  (() => {
+    const box = document.querySelector('[data-views]');
+    if (!box) return;
+    let tries = 0;
+    const check = () => {
+      const pv = document.getElementById('busuanzi_value_site_pv');
+      if (pv && /^\d+$/.test((pv.textContent || '').trim())) {
+        box.classList.add('is-ready');
+      } else if (tries++ < 20) {
+        setTimeout(check, 300);
+      }
+    };
+    check();
+  })();
+</script>

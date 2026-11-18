@@ -282,7 +282,8 @@ if (!process.env.NOTION_API_KEY) {
 
 const api = new Client({ auth: process.env.NOTION_API_KEY });
 const dataSourceId = extractNotionId(process.env.NOTION_PROJECTS_ID);
-const coverUrl = `https://freext-94.github.io/projects/personal-portfolio/00-cover.webp`;
+const coverArg = args.find((arg) => arg.startsWith('--cover='));
+const coverUrl = coverArg?.slice('--cover='.length);
 
 const { results } = await api.dataSources.query({ data_source_id: dataSourceId, page_size: 100 });
 const row = results.find((item) => {
@@ -321,13 +322,13 @@ for (const block of existing) {
 console.log(`归档 ${archived}/${existing.length} 块`);
 
 // 3) 封面默认不动：库里已经有图就不覆盖，只有显式 --cover 才换成 00-cover.webp
-if (args.includes('--cover')) {
+if (coverUrl) {
   await api.pages.update({
     page_id: pageId,
     properties: { 封面图片: { url: coverUrl } },
   });
   console.log(`封面已更新：${coverUrl}`);
 } else {
-  console.log('封面保持原样（加 --cover 可换成 00-cover.webp）');
+  console.log('封面保持原样（加 --cover=<图片地址> 可替换）');
 }
 console.log('\n完成。触发一次部署后，线上就会用新正文。');

@@ -1,0 +1,125 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getPortfolio } from '@/lib/notion';
+import { projectPath, siteRoot } from '@/lib/routes';
+
+const { profile, projects } = await getPortfolio();
+const suggestions = projects.slice(0, 3);
+---
+
+<Base profile={profile} title={`页面不存在 · ${profile.name}的个人主页`}>
+  <section class="shell notfound">
+    <p class="code" aria-hidden="true">404</p>
+    <h1>这条链接不存在</h1>
+    <p class="lead">
+      可能是地址输错了，也可能是这个页面还没做。下面几个入口，应该能找到你要的东西。
+    </p>
+
+    <div class="actions">
+      <a class="btn btn-primary" href={siteRoot()}>回到首页</a>
+      <a class="btn btn-ghost" href={`${siteRoot()}projects/`}>看看作品集</a>
+      {profile.email && <a class="btn btn-ghost" href={`mailto:${profile.email}`}>发封邮件</a>}
+    </div>
+
+    {
+      suggestions.length > 0 && (
+        <div class="suggest">
+          <p class="label">或者从这几个项目开始</p>
+          <ul>
+            {suggestions.map((project) => (
+              <li>
+                <a href={projectPath(project.slug) ?? `${siteRoot()}#projects`}>
+                  <span class="name">{project.name}</span>
+                  {project.category && <span class="cat">{project.category}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+  </section>
+</Base>
+
+<style>
+  .notfound {
+    padding-block: clamp(3rem, 12vw, 8rem) clamp(4rem, 14vw, 9rem);
+    max-inline-size: 46rem;
+  }
+
+  .code {
+    font-size: clamp(5rem, 20vw, 10rem);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+    background-image: var(--brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  h1 {
+    margin-block: 1.25rem 0.75rem;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    letter-spacing: -0.03em;
+  }
+
+  .lead {
+    max-inline-size: 34rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-block: 2rem;
+  }
+
+  .suggest {
+    margin-block-start: 2.5rem;
+    padding-block-start: 1.5rem;
+    border-block-start: 1px solid var(--border);
+  }
+
+  .label {
+    margin-block-end: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+  }
+
+  ul {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li a {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+
+  li a:hover {
+    background: var(--sunken);
+  }
+
+  .name {
+    font-weight: 600;
+  }
+
+  .cat {
+    flex: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+</style>

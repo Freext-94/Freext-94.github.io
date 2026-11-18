@@ -59,6 +59,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
       })();
     </script>
+
+    <!-- 访问统计：不蒜子，零注册、无 Cookie；脚本失败时页脚计数自动隐藏 -->
+    <script is:inline defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">跳到主要内容</a>
