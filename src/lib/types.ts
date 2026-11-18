@@ -1,3 +1,5 @@
+import type { CollectionKey } from './schema';
+
 /** 社交媒体条目：库里每个平台一个 URL 字段，存二维码图片直链 */
 export interface SocialEntry {
   key: string;
@@ -88,12 +90,16 @@ export interface Article {
   order: number;
 }
 
+/** Notion 里各数据源的真实名称，用作区块的英文小标题 */
+export type DbNames = Record<CollectionKey, string>;
+
 export interface Portfolio {
   profile: ProfileInfo;
   projects: Project[];
   skills: Skill[];
   experience: ExperienceItem[];
   articles: Article[];
+  dbNames: DbNames;
   /** sample 表示未配置 Notion，使用了内置示例数据 */
   source: 'notion' | 'sample';
 }

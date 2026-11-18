@@ -20,8 +20,14 @@ import type { Portfolio } from './types';
 import type { ProjectDetailBlock } from './types';
 import { SAMPLE_PORTFOLIO } from '@/data/fixtures';
 
-const { Client, collectPaginatedAPI, extractNotionId, isFullDatabase, isNotionClientError } =
-  pkg;
+const {
+  Client,
+  collectPaginatedAPI,
+  extractNotionId,
+  isFullDatabase,
+  isFullDataSource,
+  isNotionClientError,
+} = pkg;
 
 interface NotionConfig {
   token: string;
@@ -126,24 +132,63 @@ async function withRetry<T>(label: string, run: () => Promise<T>): Promise<T> {
   }
 }
 
-async function queryRows(api: NotionClient, configuredId: string): Promise<NotionRow[]> {
+/** Notion 里的数据源名会直接当区块的英文小标题用，所以取回来要 trim */
+function richTextName(value: unknown): string | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const name = value
+    .map((item) => (item as { plain_text?: string }).plain_text ?? '')
+    .join('')
+    .trim();
+  return name || undefined;
+}
+
+interface Source {
+  rows: NotionRow[];
+  name: string;
+}
+
+/**
+ * 数据源名跟着 Notion 走：你在库里改名，页面上的英文小标题同步变。
+ * retrieve 顺带确认这个 ID 确实是数据源；取不到名字不影响内容，
+ * 退回 schema 里配置的名字，因为标题只是装饰，不值得让整站构建失败。
+ */
+async function readSource(
+  api: NotionClient,
+  key: CollectionKey,
+  configuredId: string,
+): Promise<Source> {
+  const fallback = COLLECTIONS[key].title;
   const id = notionId(configuredId);
+  let data_source_id = id;
+  let name = fallback;
+
   try {
-    return await collectRows(api, id);
+    const source = await api.dataSources.retrieve({ data_source_id: id });
+    // 小标题只是装饰，响应里没带 title 就退回配置值，不值得让整站构建失败
+    name = (isFullDataSource(source) && richTextName(source.title)) || fallback;
   } catch (error) {
+    // 只有明确「找不到」才当成数据库 ID，网络故障交给 withRetry
     if (!isObjectNotFound(error)) throw error;
+    const database = await api.databases.retrieve({ database_id: id });
+    if (!isFullDatabase(database)) throw new Error(`${id} 既不是数据源，也不是可读取的数据库`);
+    const [first] = database.data_sources;
+    if (!first) throw new Error(`数据库 ${id} 下没有可用的数据源`);
+    data_source_id = first.id;
+    name = richTextName(database.title) ?? fallback;
   }
 
-  const database = await api.databases.retrieve({ database_id: id });
-  if (!isFullDatabase(database)) {
-    throw new Error(`${id} 既不是数据源，也不是可读取的数据库`);
-  }
-  const [first] = database.data_sources;
-  if (!first) throw new Error(`数据库 ${id} 下没有可用的数据源`);
-  return collectRows(api, first.id);
+  return { rows: await collectRows(api, data_source_id), name };
 }
 
 const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order;
+
+/**
+ * 分类名按中文拼音升序（zh collation）。
+ * 注意 ICU 的 zh 排序把拉丁字母排在汉字之后，所以「AI 应用与自动化」
+ * 和「Web 开发与 API 集成」会落在最后，不是最前。
+ */
+const byCategory = (a: { category: string }, b: { category: string }) =>
+  a.category.localeCompare(b.category, 'zh');
 
 /** 没填标题的行是库里的占位行，直接丢掉 */
 function hasTitle(row: NotionRow, property: string): boolean {
@@ -216,19 +261,27 @@ async function load(): Promise<Portfolio> {
   const api = new Client({ auth: config.token });
 
   try {
-    const [profileRows, projectRows, skillRows, experienceRows, articleRows] =
+    const [srcProfile, srcProjects, srcSkills, srcExperience, srcArticles] =
       await Promise.all(
         COLLECTION_KEYS.map((key) =>
-          withRetry(COLLECTIONS[key].title, () => queryRows(api, config.ids[key])),
+          withRetry(COLLECTIONS[key].title, () => readSource(api, key, config.ids[key])),
         ),
       );
 
-    const [profileRow] = profileRows;
+    const dbNames = {
+      profile: srcProfile.name,
+      projects: srcProjects.name,
+      skills: srcSkills.name,
+      experience: srcExperience.name,
+      articles: srcArticles.name,
+    };
+
+    const [profileRow] = srcProfile.rows;
     if (!profileRow) {
       throw new Error('Profile 库里没有任何记录，页面无法确定姓名与简介。');
     }
 
-    const projects = projectRows
+    const projects = srcProjects.rows
       .filter((row) => hasTitle(row, PROP.projects.title))
       .map(toProject)
       .sort(byOrder);
@@ -236,7 +289,7 @@ async function load(): Promise<Portfolio> {
     await Promise.all(
       projects.map(async (project) => {
         if (!project.slug) return;
-        const row = projectRows.find((item) => item.id === project.id);
+        const row = srcProjects.rows.find((item) => item.id === project.id);
         if (row) project.details = await withRetry(project.name, () => readProjectDetails(api, row.id));
       }),
     );
@@ -244,22 +297,23 @@ async function load(): Promise<Portfolio> {
     return {
       profile: toProfile(profileRow),
       projects,
-      // Skills 库没有排序字段：按熟练度降序排，分组时分类自然按各自最强项排序
-      skills: skillRows
+      // 分类名拼音升序，同组内按熟练度降序
+      skills: srcSkills.rows
         .filter((row) => hasTitle(row, PROP.skills.title))
         .filter((row) => !isHidden(row, PROP.skills.visible))
         .map(toSkill)
-        .sort((a, b) => b.level - a.level),
+        .sort((a, b) => byCategory(a, b) || b.level - a.level),
       // 库里 排序 1 就是最近一段，升序即倒序时间线
-      experience: experienceRows
+      experience: srcExperience.rows
         .filter((row) => hasTitle(row, PROP.experience.company))
         .filter((row) => !isHidden(row, PROP.experience.visible))
         .map(toExperience)
         .sort(byOrder),
-      articles: articleRows
+      articles: srcArticles.rows
         .filter((row) => hasTitle(row, PROP.articles.title))
         .map(toArticle)
         .sort(byOrder),
+      dbNames,
       source: 'notion',
     };
   } catch (error) {

@@ -26,14 +26,15 @@ const avg = (items: Skill[]) =>
       return (
         <div class="card group" data-reveal style={`--i:${groupIndex}`}>
           <header class="head">
-            <h3 class="title">
-              <span class="dot" aria-hidden="true"></span>
-              {category}
-            </h3>
+            <div class="titles">
+              <h3 class="title">
+                <span class="dot" aria-hidden="true"></span>
+                {category}
+              </h3>
+              {position && <span class="pill pill-brand">{position}</span>}
+            </div>
             <span class="score mono">均值 {avg(items)}</span>
           </header>
-
-          {position && <p class="position">{position}</p>}
 
           <ul class="list">
             {items.map((skill, index) => (
@@ -46,7 +47,11 @@ const avg = (items: Skill[]) =>
                   <p class="name">{skill.name}</p>
                   {skill.note && <p class="note">{skill.note}</p>}
                   {skill.tags.length > 0 && (
-                    <p class="tags">{skill.tags.join(' · ')}</p>
+                    <ul class="pills">
+                      {skill.tags.map((tag) => (
+                        <li class="pill">{tag}</li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               </li>
@@ -77,9 +82,18 @@ const avg = (items: Skill[]) =>
 
   .head {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem;
+    margin-block-end: 1.2rem;
+  }
+
+  .titles {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-inline-size: 0;
   }
 
   .title {
@@ -103,13 +117,8 @@ const avg = (items: Skill[]) =>
     font-size: 0.76rem;
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
-  }
-
-  /* 「技能定位」在同一分类下取值一致，用作分组的一句话说明 */
-  .position {
-    margin-block: 0.35rem 1.25rem;
-    font-size: 0.83rem;
-    color: var(--text-muted);
+    white-space: nowrap;
+    padding-block-start: 0.28rem;
   }
 
   .list {
@@ -207,10 +216,14 @@ const avg = (items: Skill[]) =>
   }
 
   /* 标签用中点串成一行，避免 17 条技能堆出上百个胶囊 */
-  .tags {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    opacity: 0.8;
+  /* 技能标签用小胶囊，和项目卡片里的技术栈保持同一套视觉 */
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.15rem 0 0;
+    padding: 0;
+    list-style: none;
   }
 
   @media (width <= 30rem) {

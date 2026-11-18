@@ -111,4 +111,17 @@ const experience: ExperienceItem[] = [
 
 const articles: Article[] = [];
 
-export const SAMPLE_PORTFOLIO = { profile, projects, skills, experience, articles };
+export const SAMPLE_PORTFOLIO = {
+  profile,
+  projects,
+  skills,
+  experience,
+  articles,
+  dbNames: {
+    profile: 'Profile',
+    projects: 'Selected Projects',
+    skills: 'Skills & Expertise',
+    experience: 'Experience',
+    articles: 'Articles',
+  },
+};

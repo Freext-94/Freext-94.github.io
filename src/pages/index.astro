@@ -9,7 +9,7 @@ import ArticleList from '@/components/ArticleList.astro';
 import Contact from '@/components/Contact.astro';
 import { getPortfolio } from '@/lib/notion';
 
-const { profile, projects, skills, experience, articles, source } =
+const { profile, projects, skills, experience, articles, dbNames, source } =
   await getPortfolio();
 
 // 第一个项目若标了「精选」就占据整行，作为作品集的门面
@@ -59,8 +59,8 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     profile.summary.length > 0 && (
       <Section
         id="about"
-        eyebrow="ABOUT"
-        title="关于我"
+        eyebrow={dbNames.profile}
+        title="我是谁"
         description={profile.positioning}
       >
         <div class="about">
@@ -76,9 +76,9 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     skills.length > 0 && (
       <Section
         id="skills"
-        eyebrow="SKILLS"
-        title="技能"
-        description="按分类整理，来自 Notion 的 Skills 库。"
+        eyebrow={dbNames.skills}
+        title="我会做什么"
+        description="按分类整理，环上的数字是我对自己的评估，不是考核结果。"
       >
         <SkillGrid skills={skills} />
       </Section>
@@ -89,8 +89,8 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     projects.length > 0 && (
       <Section
         id="projects"
-        eyebrow="PROJECTS"
-        title="项目"
+        eyebrow={dbNames.projects}
+        title="我做过什么"
         description="展示我解决过的问题、采用的方案与实际成果；完整清单在 Notion 里维护。"
       >
         <div class="projects">
@@ -141,16 +141,16 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     experience.length > 0 && (
       <Section
         id="experience"
-        eyebrow="EXPERIENCE"
-        title="经历"
-        description="工作履历，按时间倒序；结束时间留空表示仍在进行。"
+        eyebrow={dbNames.experience}
+        title="工作历程"
+        description="在哪做过什么、解决了什么问题，按时间倒着排。"
       >
         <Timeline items={experience} />
 
         {
           education && (
             <div class="education card" data-reveal>
-              <span class="edu-label">教育背景</span>
+              <span class="edu-label">读书经历</span>
               <p class="edu-value">{education}</p>
             </div>
           )
@@ -163,16 +163,16 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     articles.length > 0 && (
       <Section
         id="articles"
-        eyebrow="ARTICLES"
-        title="文章"
-        description="记录一些思考与沉淀。"
+        eyebrow={dbNames.articles}
+        title="我写过的东西"
+        description="平时记录的一些思考和复盘。"
       >
         <ArticleList articles={articles} />
       </Section>
     )
   }
 
-  <Section id="contact" eyebrow="CONTACT" title="联系我">
+  <Section id="contact" eyebrow="CONTACT" title="怎么找到我">
     <Contact profile={profile} />
   </Section>
 </Base>

@@ -120,7 +120,7 @@ export const COLLECTIONS = {
   },
   projects: {
     envKey: 'NOTION_PROJECTS_ID',
-    title: 'Projects',
+    title: 'Selected Projects',
     icon: { type: 'emoji', emoji: '🚀' },
     properties: {
       [PROP.projects.title]: { kind: 'title' },
@@ -138,7 +138,7 @@ export const COLLECTIONS = {
   },
   skills: {
     envKey: 'NOTION_SKILLS_ID',
-    title: 'Skills',
+    title: 'Skills & Expertise',
     icon: { type: 'emoji', emoji: '🛠️' },
     properties: {
       [PROP.skills.title]: { kind: 'title' },
