@@ -17,3 +17,6 @@ scripts/.notion-dump/
 
 # 构建时从 Notion 正文下载的图片，不进仓库
 public/notion-assets/
+
+# 本地工具数据，不进仓库
+.workbuddy/
