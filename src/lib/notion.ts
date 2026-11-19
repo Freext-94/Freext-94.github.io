@@ -157,14 +157,15 @@ interface Source {
 let coverManifest: Record<string, string> | undefined;
 
 function canvaCovers(): Record<string, string> {
-  if (!coverManifest) {
-    try {
-      coverManifest = JSON.parse(readFileSync('public/covers/manifest.json', 'utf8'));
-    } catch {
-      coverManifest = {};
-    }
+  if (coverManifest) return coverManifest;
+  let parsed: Record<string, string> = {};
+  try {
+    parsed = JSON.parse(readFileSync('public/covers/manifest.json', 'utf8')) as Record<string, string>;
+  } catch {
+    // 没跑过截图脚本时，正常退回原始 URL
   }
-  return coverManifest;
+  coverManifest = parsed;
+  return parsed;
 }
 
 export function localizeImage(url?: string): string | undefined {
