@@ -285,7 +285,12 @@ function toPageDetails(blocks: NotionBlock[]): ProjectDetailBlock[] {
       else details.push({ type: 'list', ordered, items: [html] });
     } else if (block.type === 'image') {
       const url = imageUrl(block);
-      if (url) details.push({ type: 'image', url: localizeImage(url) ?? url, caption: html || undefined });
+      // 图片的说明文字在 image.caption 里，不在 rich_text 里；
+      // 之前读的是 rich_text，所以所有图注都没渲染出来。
+      const caption = richTextToHtml(
+        (block.image as { caption?: RichTextItem[] } | undefined)?.caption,
+      );
+      if (url) details.push({ type: 'image', url: localizeImage(url) ?? url, caption: caption || undefined });
     } else if (block.type === 'embed') {
       // 自托管的 HTML（比如架构图）走 embed 块，页面里用 iframe 渲染
       const url = embedUrl(block);
