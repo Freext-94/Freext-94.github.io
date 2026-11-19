@@ -29,3 +29,22 @@ export function canvaDesignId(url: string): string | undefined {
     return undefined;
   }
 }
+
+/**
+ * 同一个设计链接可能带 #N 指向第 N 页（多页设计常用同一个链接）。
+ * 没有片段时按第 1 页处理，保证 key 稳定。
+ */
+export function canvaPage(url: string): string {
+  try {
+    const page = Number.parseInt(new URL(url).hash.replace(/^#/, ''), 10);
+    return Number.isFinite(page) && page > 0 ? String(page) : '1';
+  } catch {
+    return '1';
+  }
+}
+
+/** manifest 的键：设计 ID + 页号 */
+export function canvaKey(url: string): string | undefined {
+  const id = canvaDesignId(url);
+  return id ? `${id}#${canvaPage(url)}` : undefined;
+}

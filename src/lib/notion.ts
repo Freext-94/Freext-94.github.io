@@ -2,7 +2,7 @@ import pkg from '@notionhq/client';
 import type { Client as NotionClient } from '@notionhq/client';
 import dns from 'node:dns';
 import { readFileSync } from 'node:fs';
-import { canvaDesignId, isCanvaUrl } from './canva';
+import { canvaKey, isCanvaUrl } from './canva';
 import {
   COLLECTIONS,
   COLLECTION_KEYS,
@@ -170,8 +170,8 @@ function canvaCovers(): Record<string, string> {
 
 export function localizeImage(url?: string): string | undefined {
   if (!url || !isCanvaUrl(url)) return url;
-  const designId = canvaDesignId(url);
-  return (designId && canvaCovers()[designId]) || url;
+  const key = canvaKey(url);
+  return (key && canvaCovers()[key]) || url;
 }
 
 /**

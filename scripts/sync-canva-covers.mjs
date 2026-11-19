@@ -14,13 +14,13 @@
  * 产物写进 public/covers/（已 gitignore，不进仓库），同时生成 manifest.json，
  * 供 src/lib/notion.ts 在构建时把 Canva 链接替换成站内路径。
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import dns from 'node:dns';
 import notion from '@notionhq/client';
 import puppeteer from 'puppeteer-core';
 import sharp from 'sharp';
-import { canvaDesignId, isCanvaUrl } from '../src/lib/canva.ts';
+import { canvaKey, isCanvaUrl } from '../src/lib/canva.ts';
 
 const { Client, extractNotionId, collectPaginatedAPI } = notion;
 
@@ -33,7 +33,7 @@ const MANIFEST = join('public', 'covers', 'manifest.json');
 const WIDTH = 1600;
 const HEIGHT = 900;
 const CROP_HEIGHT = 836; // 切掉 Canva 底部的翻页 / 缩放控制条
-const WAIT_MS = 6000;
+const WAIT_MS = 7000;
 
 const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
@@ -63,7 +63,7 @@ function canvaEmbedUrl(url) {
     if (parts.length >= 4) parts[3] = 'view';
     parsed.pathname = `/${parts.join('/')}`;
     parsed.search = 'embed';
-    parsed.hash = '';
+    // 保留 #N：同一个多页设计的链接靠片段区分页
     return parsed.href;
   } catch {
     return undefined;
@@ -76,10 +76,11 @@ async function collectJobs(api) {
   const jobs = new Map(); // designId -> { embed, source }
   const add = (url, source) => {
     if (!isCanvaUrl(url)) return;
-    const id = canvaDesignId(url);
-    const embed = id ? canvaEmbedUrl(url) : undefined;
-    if (!id || !embed || jobs.has(id)) return;
-    jobs.set(id, { embed, source });
+    const key = canvaKey(url);
+    const embed = key ? canvaEmbedUrl(url) : undefined;
+    if (!key || !embed || jobs.has(key)) return;
+    const [id, page] = key.split('#');
+    jobs.set(key, { embed, source, file: `${id}-p${page}.webp` });
   };
 
   const { results: projects } = await api.dataSources.query({
@@ -119,15 +120,15 @@ async function collectJobs(api) {
   return jobs;
 }
 
-async function shoot(browser, page, designId, embedUrl) {
-  await page.goto(embedUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+async function shoot(page, job) {
+  await page.goto(job.embed, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await new Promise((resolve) => setTimeout(resolve, WAIT_MS));
   const buffer = await page.screenshot({
     type: 'webp',
     quality: 90,
     clip: { x: 0, y: 0, width: WIDTH, height: CROP_HEIGHT },
   });
-  const file = join(OUT_DIR, `${designId}.webp`);
+  const file = join(OUT_DIR, job.file);
   await sharp(buffer).resize({ width: WIDTH, withoutEnlargement: true }).webp({ quality: 82 }).toFile(file);
   return file;
 }
@@ -172,25 +173,31 @@ async function main() {
     while (queue.length) {
       const item = queue.shift();
       if (!item) break;
-      const [designId, job] = item;
+      const [key, job] = item;
       try {
-        const file = await shoot(browser, page, designId, job.embed);
-        manifest[designId] = `/covers/canva/${designId}.webp`;
+        const file = await shoot(page, job);
+        manifest[key] = `/covers/canva/${job.file}`;
         console.log(`  ✓ ${job.source} → ${file}`);
       } catch (error) {
         console.warn(`  ✗ ${job.source}：${error.message}`);
-        const existing = join(OUT_DIR, `${designId}.webp`);
+        const existing = join(OUT_DIR, job.file);
         if (existsSync(existing)) {
-          manifest[designId] = `/covers/canva/${designId}.webp`;
+          manifest[key] = `/covers/canva/${job.file}`;
           console.warn('    沿用上一版文件');
         }
       }
-      results.push(designId);
+      results.push(key);
     }
     await page.close();
   });
   await Promise.all(workers);
   await browser.close();
+
+  // 清掉本次没有生成、也不在 manifest 里的旧图，避免改页号后留下孤儿文件
+  const keep = new Set(Object.values(manifest).map((p) => p.split('/').pop()));
+  for (const file of readdirSync(OUT_DIR)) {
+    if (file.endsWith('.webp') && !keep.has(file)) unlinkSync(join(OUT_DIR, file));
+  }
 
   mkdirSync(join('public', 'covers'), { recursive: true });
   writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
