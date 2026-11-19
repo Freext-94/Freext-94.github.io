@@ -13,3 +13,7 @@ public/covers/
 
 # 构建时从 Canva 生成的封面图，不进仓库
 public/covers/
+
+# 配图渲染与 Notion 正文导出的本地缓存
+scripts/.figure-out/
+scripts/.notion-dump/

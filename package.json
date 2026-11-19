@@ -13,7 +13,9 @@
     "check": "astro check",
     "verify": "astro check && astro build",
     "notion:setup": "node scripts/setup-notion.mjs",
-    "covers": "node scripts/sync-canva-covers.mjs"
+    "covers": "node scripts/sync-canva-covers.mjs",
+    "figures": "node scripts/render-project-figures.mjs",
+    "notion:dump": "node scripts/dump-notion-projects.mjs"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-sc": "^5.3.1",
