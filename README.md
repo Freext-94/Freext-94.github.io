@@ -1,14 +1,24 @@
 # Freext 的个人主页
 
+[English](README.en.md) · 简体中文
+
 这是我的求职主页，也是我拿来展示的一件作品。
 
 我想让别人打开页面后，能比较快地知道我做过什么、擅长什么、在哪些事情上有实际经验。主页本身也顺便回答一个问题：不买服务器、不另搭后台，能不能把个人网站做出来并持续更新？现在答案是：可以。内容放 Notion，Astro 负责生成网页，GitHub Actions 自动发布到 GitHub Pages。
 
 在线地址：[freext-94.github.io](https://freext-94.github.io/)
 
+![首页](public/projects/personal-portfolio/01-hero.webp)
+
+## 界面
+
+| 作品集 | 手机端 |
+| --- | --- |
+| ![作品集](public/projects/personal-portfolio/05-portfolio.webp) | ![手机端](public/projects/personal-portfolio/07-mobile.webp) |
+
 ## 这里有什么
 
-首页放个人介绍、技能、几段工作经历和精选项目；项目可以点进去看完整过程，全部项目在「作品集」页面。文章和联系方式也在首页。
+首页放个人介绍、技能、几段工作经历和精选项目；项目可以点进去看完整过程，全部项目在「作品集」页面，文章在「全部文章」页面，联系方式也在首页。
 
 项目详情里的背景、过程、职责、图片和链接直接写在 Notion 项目页面正文里。**Notion 是唯一的内容来源**，网站构建时读取它；仓库里不再留一份项目正文 Markdown，免得两边改着改着对不上。
 
@@ -71,10 +81,13 @@ npm run verify    # 检查并构建
 
 `npm run build` 和 `npm run verify` 会访问 Notion；遇到网络问题时，通常是构建取不到内容。
 
-工作流位于 `.github/workflows/deploy.yml`，推送到 `main` 或手动触发时会构建并发布网站（每日定时任务当前优化阶段暂时关闭）。Notion 内容在每次构建时读取，因此 Notion 内容更新后会在下一次部署后显示。`r`n`r`n## 如果要改代码
+工作流位于 `.github/workflows/deploy.yml`，推送到 `main` 或手动触发时会构建并发布网站（每日定时任务当前优化阶段暂时关闭）。Notion 内容在每次构建时读取，因此 Notion 内容更新后会在下一次部署后显示。
+
+## 如果要改代码
 
 - 首页内容和区块顺序：`src/pages/index.astro`
 - 项目详情和作品集清单：`src/pages/projects/`
+- 文章列表和详情：`src/pages/articles/`
 - Notion 字段定义和读取：`src/lib/`
 - 颜色、字体和全局样式：`src/styles/global.css`
 - 页面组件：`src/components/`
@@ -82,3 +95,10 @@ npm run verify    # 检查并构建
 
 有字段没显示时先跑 `npm run notion:setup -- --check`；页面内容更新了但线上没变化时，到 GitHub Actions 看最近一次构建有没有成功。
 
+## 关于隐私
+
+- 项目正文只存在 Notion，仓库不保留副本。
+- `.env.local`、`public/covers/`、`scripts/.figure-out/`、`scripts/.notion-dump/` 都在 `.gitignore` 里，fork 或从 GitHub 打包下载不会带上。
+- 仓库里的配图与截图属于主页的展示素材；`.env.local` 里的 Notion 密钥不要提交，也不要贴到公开聊天里。
+
+如果你打算把这个仓库当模板分发，把 `public/avatar.png`、`public/og.png` 和 `public/projects/` 换成自己的素材即可。
