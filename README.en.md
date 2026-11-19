@@ -8,13 +8,13 @@ I want visitors to quickly see what I've built, what I'm good at, and where I ha
 
 Live: [freext-94.github.io](https://freext-94.github.io/)
 
-![Homepage](public/projects/personal-portfolio/01-hero.webp)
+![Homepage](https://freext-94.github.io/notion-assets/personal-portfolio/01-hero.webp)
 
 ## Screens
 
 | Portfolio | Mobile |
 | --- | --- |
-| ![Portfolio](public/projects/personal-portfolio/05-portfolio.webp) | ![Mobile](public/projects/personal-portfolio/07-mobile.webp) |
+| ![Portfolio](https://freext-94.github.io/notion-assets/personal-portfolio/05-portfolio.webp) | ![Mobile](https://freext-94.github.io/notion-assets/personal-portfolio/07-mobile.webp) |
 
 ## What's inside
 

@@ -8,13 +8,13 @@
 
 在线地址：[freext-94.github.io](https://freext-94.github.io/)
 
-![首页](public/projects/personal-portfolio/01-hero.webp)
+![首页](https://freext-94.github.io/notion-assets/personal-portfolio/01-hero.webp)
 
 ## 界面
 
 | 作品集 | 手机端 |
 | --- | --- |
-| ![作品集](public/projects/personal-portfolio/05-portfolio.webp) | ![手机端](public/projects/personal-portfolio/07-mobile.webp) |
+| ![作品集](https://freext-94.github.io/notion-assets/personal-portfolio/05-portfolio.webp) | ![手机端](https://freext-94.github.io/notion-assets/personal-portfolio/07-mobile.webp) |
 
 ## 这里有什么
 

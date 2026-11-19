@@ -8,12 +8,13 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "node scripts/sync-canva-covers.mjs && astro build",
+    "build": "node scripts/sync-canva-covers.mjs && node scripts/sync-notion-images.mjs && astro build",
     "preview": "astro preview",
     "check": "astro check",
     "verify": "astro check && astro build",
     "notion:setup": "node scripts/setup-notion.mjs",
     "covers": "node scripts/sync-canva-covers.mjs",
+    "images": "node scripts/sync-notion-images.mjs",
     "figures": "node scripts/render-project-figures.mjs",
     "notion:dump": "node scripts/dump-notion-projects.mjs"
   },

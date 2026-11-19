@@ -14,3 +14,6 @@ public/covers/
 # 配图渲染与 Notion 正文导出的本地缓存
 scripts/.figure-out/
 scripts/.notion-dump/
+
+# 构建时从 Notion 正文下载的图片，不进仓库
+public/notion-assets/

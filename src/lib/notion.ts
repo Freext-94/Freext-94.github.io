@@ -185,8 +185,45 @@ function canvaCovers(): Record<string, string> {
   return parsed;
 }
 
-export function localizeImage(url?: string): string | undefined {
-  if (!url || !isCanvaUrl(url)) return url;
+/**
+ * Notion 上传的图片是签名地址，一小时过期。构建前由
+ * scripts/sync-notion-images.mjs 下载到 public/notion-assets，
+ * manifest 用块 ID 做键（签名地址每次查询都会变，不能拿来当键）。
+ */
+let notionManifest: Record<string, string> | undefined;
+
+function notionAssets(): Record<string, string> {
+  if (notionManifest) return notionManifest;
+  let parsed: Record<string, string> = {};
+  try {
+    parsed = JSON.parse(readFileSync('public/notion-assets/manifest.json', 'utf8')) as Record<
+      string,
+      string
+    >;
+  } catch {
+    // 没跑过同步脚本时，退回原始地址
+  }
+  notionManifest = parsed;
+  return parsed;
+}
+
+export function localizeImage(url?: string, blockId?: string): string | undefined {
+  if (!url) return undefined;
+  if (blockId) {
+    const local = notionAssets()[blockId];
+    if (local) return local;
+    // Notion 托管但本地没下载成功：宁可让构建失败，也不要把一小时过期的地址写进页面
+    if (/prod-files-secure\.s3|X-Amz-Signature/.test(url)) {
+      if (import.meta.env.DEV) {
+        console.warn(`[notion] 图片块 ${blockId} 未同步，开发环境暂时使用临时地址`);
+        return url;
+      }
+      throw new Error(
+        `[notion] 图片块 ${blockId} 没有本地副本，构建已中止。请先运行 npm run images。`,
+      );
+    }
+  }
+  if (!isCanvaUrl(url)) return url;
   const key = canvaKey(url);
   return (key && canvaCovers()[key]) || url;
 }
@@ -395,7 +432,7 @@ function toPageDetails(blocks: NotionBlock[], page: string): ProjectDetailBlock[
       const caption = richTextToHtml(
         (block.image as { caption?: RichTextItem[] } | undefined)?.caption,
       );
-      if (url) details.push({ type: 'image', url: localizeImage(url) ?? url, caption: caption || undefined });
+      if (url) details.push({ type: 'image', url: localizeImage(url, block.id) ?? url, caption: caption || undefined });
     } else if (block.type === 'embed') {
       // 自托管的 HTML（比如架构图）走 embed 块，页面里用 iframe 渲染
       const url = embedUrl(block);
