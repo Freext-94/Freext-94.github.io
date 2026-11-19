@@ -6,15 +6,15 @@
 <title>业务流程</title>
 <style>
   :root {
-    --bg: #0b0a12;
-    --text: #ece9f6;
-    --muted: #a49dbf;
-    --dim: #736d8c;
-    --line: rgba(255, 255, 255, 0.14);
-    --purple: #a78bfa;
-    --pink: #f472b6;
-    --amber: #fbbf24;
-    --cyan: #22d3ee;
+    --bg: #f4f2fa;
+    --text: #16131f;
+    --muted: #5c5670;
+    --dim: #8b85a0;
+    --line: rgba(22, 19, 31, 0.14);
+    --purple: #6d28d9;
+    --pink: #db2777;
+    --amber: #b45309;
+    --cyan: #0891b2;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); height: 100%; }
@@ -26,11 +26,11 @@
   }
   .frame {
     height: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(22, 19, 31, 0.08);
     border-radius: 18px;
     background:
-      radial-gradient(900px 400px at 8% -10%, rgba(167, 139, 250, 0.14), transparent 62%),
-      radial-gradient(760px 360px at 95% 110%, rgba(244, 114, 182, 0.1), transparent 60%),
+      radial-gradient(900px 400px at 8% -10%, rgba(109, 40, 217, 0.10), transparent 62%),
+      radial-gradient(760px 360px at 95% 110%, rgba(219, 39, 119, 0.07), transparent 60%),
       var(--bg);
     overflow: hidden;
   }
@@ -151,7 +151,7 @@
     const g = el('g', { class: 'node' });
     g.appendChild(el('rect', {
       x, y, width: W, height: H, rx: 12,
-      fill: 'rgba(255,255,255,0.04)', stroke: 'rgba(255,255,255,0.13)', 'stroke-width': 0.8,
+      fill: '#ffffff', stroke: 'rgba(22,19,31,0.10)', 'stroke-width': 0.8,
     }));
     g.appendChild(el('rect', { x, y, width: 4, height: H, rx: 2, fill: color }));
     g.appendChild(el('text', {
