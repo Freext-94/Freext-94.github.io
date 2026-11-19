@@ -10,6 +10,9 @@ interface Props {
   contentSource?: 'notion' | 'sample';
   title?: string;
   description?: string;
+  /** 分享卡片图，传站内绝对路径；默认首页那张 1200×630 */
+  ogImage?: string;
+  ogImageAlt?: string;
 }
 
 const {
@@ -17,6 +20,8 @@ const {
   contentSource = 'notion',
   title,
   description = profile.summary[0] ?? '个人主页与作品集。',
+  ogImage = '/og.png',
+  ogImageAlt,
 } = Astro.props;
 
 /** 站名跟着 Notion 的「姓名」走，改名不用动代码 */
@@ -25,9 +30,11 @@ const heading = title ?? `${siteName} · ${profile.positioning}`;
 
 // trailingSlash 为 ignore 时 BASE_URL 不带尾斜杠，直接拼接会少一个 /
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
-const canonical = new URL(Astro.url.pathname, Astro.site);
-// 分享卡固定用站内资源：Notion 的图床链接会过期，之前 og:image 就是这么白掉的
-const ogImage = new URL(`${base}og.png`, Astro.site).href;
+// 详情页产物是目录形式，canonical 统一补尾斜杠，和 sitemap 保持一致
+const pathname = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`;
+const canonical = new URL(pathname, Astro.site);
+// 分享卡片必须用绝对地址，相对路径在微信/飞书里抓不到
+const ogImageUrl = new URL(ogImage, Astro.site).href;
 ---
 
 <!doctype html>
@@ -48,12 +55,12 @@ const ogImage = new URL(`${base}og.png`, Astro.site).href;
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
     <meta property="og:site_name" content={siteName} />
-    <meta property="og:image" content={ogImage} />
+    <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content={`${profile.name} · ${profile.positioning}`} />
+    <meta property="og:image:alt" content={ogImageAlt ?? heading} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image" content={ogImageUrl} />
 
     <!-- 首帧前定主题，避免刷新时闪一下亮色 -->
     <script is:inline>

@@ -3,10 +3,10 @@ import type { ProjectDetailBlock } from '@/lib/types';
 
 interface Props {
   blocks?: ProjectDetailBlock[];
-  projectName: string;
+  contextName: string;
 }
 
-const { blocks, projectName } = Astro.props;
+const { blocks, contextName } = Astro.props;
 ---
 
 {
@@ -26,7 +26,12 @@ const { blocks, projectName } = Astro.props;
     if (block.type === 'image') {
       return (
         <figure class="detail-image card">
-          <img src={block.url} alt={block.caption || `${projectName} 项目图片`} loading="lazy" />
+          <img
+            src={block.url}
+            alt={block.caption || `${contextName} 项目图片`}
+            loading="lazy"
+            onerror="this.remove()"
+          />
           {block.caption && <figcaption set:html={block.caption} />}
         </figure>
       );
@@ -36,11 +41,33 @@ const { blocks, projectName } = Astro.props;
         <figure class="detail-embed">
           <iframe
             src={block.url}
-            title={`${projectName} · 内嵌图表`}
+            title={`${contextName} · 内嵌图表`}
             loading="lazy"
             referrerpolicy="no-referrer"
+            sandbox="allow-scripts allow-same-origin allow-popups"
           />
         </figure>
+      );
+    }
+    if (block.type === 'table') {
+      return (
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <tbody>
+              {block.rows.map((row, rowIndex) => (
+                <tr>
+                  {row.map((cell) =>
+                    rowIndex === 0 && block.header ? (
+                      <th set:html={cell} />
+                    ) : (
+                      <td set:html={cell} />
+                    ),
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       );
     }
     if (block.type === 'code') {
@@ -198,6 +225,40 @@ const { blocks, projectName } = Astro.props;
     margin-block: 2rem;
     border: 0;
     border-block-start: 1px solid var(--border);
+  }
+
+  /* Notion 表格：窄屏横向滚动，不挤压正文 */
+  .detail-table-wrap {
+    max-inline-size: 54rem;
+    margin-block: 1.5rem;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .detail-table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .detail-table th,
+  .detail-table td {
+    padding: 0.6rem 0.85rem;
+    border-block-end: 1px solid var(--border);
+    text-align: start;
+    vertical-align: top;
+    color: var(--text-muted);
+  }
+
+  .detail-table th {
+    color: var(--text);
+    font-weight: 650;
+    background: var(--sunken);
+  }
+
+  .detail-table tr:last-child td {
+    border-block-end: 0;
   }
 
   /* 手机上架构图按整幅缩放会看不清，改成可横向拖动 */

@@ -10,7 +10,9 @@ export type PropertySpec =
   | { kind: 'number'; format?: string }
   | { kind: 'date' }
   | { kind: 'place' }
-  | { kind: 'created_time' };
+  | { kind: 'created_time' }
+  /** 日期属性优先取 date.start，属性被建成 created_time 时回退到创建时间 */
+  | { kind: 'date_or_created' };
 
 export interface CollectionSpec {
   /** .env 中的键，值为 Notion 数据源 ID（或数据库 ID，会自动解析） */
@@ -81,8 +83,10 @@ export const PROP = {
     tags: '标签',
     image: '封面图片',
     featured: '精选文章',
-    publishedAt: '发布时间',
-    status: '发布状态',
+    /** 日期属性，可能被建成 date 或 created_time，读取时兼容两种 */
+    publishedOn: '发布时间',
+    slug: 'Slug',
+    visible: '是否展示',
     order: '排序',
   },
 } as const satisfies Record<string, Record<string, string>>;
@@ -176,8 +180,9 @@ export const COLLECTIONS = {
       [PROP.articles.tags]: { kind: 'multi_select' },
       [PROP.articles.image]: { kind: 'url' },
       [PROP.articles.featured]: { kind: 'checkbox' },
-      [PROP.articles.publishedAt]: { kind: 'created_time' },
-      [PROP.articles.status]: { kind: 'status', options: STATUSES },
+      [PROP.articles.publishedOn]: { kind: 'date_or_created' },
+      [PROP.articles.slug]: { kind: 'text' },
+      [PROP.articles.visible]: { kind: 'checkbox' },
       [PROP.articles.order]: { kind: 'number', format: 'number' },
     },
   },
@@ -207,6 +212,9 @@ export function toNotionPropertySchema(spec: PropertySpec) {
       return { place: {} };
     case 'created_time':
       return { created_time: { date: {} } };
+    case 'date_or_created':
+      // 新建库时按普通日期属性建；已有库若是 created_time 也能读
+      return { date: {} };
     case 'select':
       return { select: { options: (spec.options ?? []).map((name) => ({ name })) } };
     case 'status':

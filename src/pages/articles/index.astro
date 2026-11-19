@@ -1,0 +1,121 @@
+---
+import Base from '@/layouts/Base.astro';
+import ArticleList from '@/components/ArticleList.astro';
+import { getPortfolio } from '@/lib/notion';
+import { siteRoot } from '@/lib/routes';
+
+const { profile, articles, dbNames } = await getPortfolio();
+
+// 按年份分组，保持数据层给出的倒序；没有日期的归到最后一组
+const groups = new Map<string, typeof articles>();
+for (const article of articles) {
+  const year = article.publishedOn?.slice(0, 4) ?? '未标注日期';
+  const list = groups.get(year);
+  if (list) list.push(article);
+  else groups.set(year, [article]);
+}
+const ordered = [...groups].sort(([a], [b]) =>
+  a === '未标注日期' ? 1 : b === '未标注日期' ? -1 : b.localeCompare(a),
+);
+---
+
+<Base
+  profile={profile}
+  title={`全部文章 · ${profile.name}`}
+  description={`${profile.name}写过的文章，共 ${articles.length} 篇。`}
+  ogImage="/og.png"
+  ogImageAlt={`${profile.name}的文章列表`}
+>
+  <section class="shell page">
+    <a class="back" href={siteRoot()}>← 回到首页</a>
+
+    <header class="intro">
+      <p class="eyebrow">{dbNames.articles}</p>
+      <h1>全部文章</h1>
+      <p class="lead">共 {articles.length} 篇，按发布年份分组。</p>
+    </header>
+
+    {
+      ordered.map(([year, items]) => (
+        <section class="year">
+          <h2 class="year-title">{year}</h2>
+          <ArticleList articles={items} />
+        </section>
+      ))
+    }
+
+    {
+      articles.length === 0 && (
+        <p class="empty">还没有文章。在 Notion 的 Articles 库里添加并填上 Slug 就会出现在这里。</p>
+      )
+    }
+  </section>
+</Base>
+
+<style>
+  .page {
+    padding-block: clamp(2rem, 6vw, 5rem);
+  }
+
+  .back {
+    display: inline-block;
+    margin-block-end: clamp(2rem, 5vw, 3rem);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--text);
+  }
+
+  .intro {
+    max-inline-size: 46rem;
+    margin-block-end: clamp(2rem, 5vw, 3rem);
+  }
+
+  .eyebrow {
+    margin-block-end: 0.6rem;
+    color: var(--accent-1);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin-block: 0.5rem 0.75rem;
+    font-size: clamp(2rem, 6vw, 3.4rem);
+    line-height: 1.12;
+    letter-spacing: -0.04em;
+  }
+
+  .lead {
+    color: var(--text-muted);
+    font-size: clamp(1rem, 2vw, 1.15rem);
+  }
+
+  .year {
+    margin-block-end: clamp(2rem, 5vw, 3rem);
+  }
+
+  .year-title {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-block-end: 1.1rem;
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+  }
+
+  .year-title::after {
+    content: '';
+    flex: 1;
+    block-size: 1px;
+    background: var(--border);
+  }
+
+  .empty {
+    color: var(--text-muted);
+  }
+</style>

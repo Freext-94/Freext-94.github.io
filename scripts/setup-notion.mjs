@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 在指定的 Notion 页面下创建主页需要的四个数据库，并写回 .env.local。
+ * 在指定的 Notion 页面下创建主页需要的五个数据库，并写回 .env.local。
  *
  *   node scripts/setup-notion.mjs <Notion 父页面链接> [--write]
  *   node scripts/setup-notion.mjs --check

@@ -5,6 +5,7 @@ on:
   push:
     branches: [main]
   # 每天 UTC 18:00（北京时间 02:00）自动同步一次 Notion 内容
+  # 当前为节约 Actions 额度暂时关闭，需要时取消下面两行注释即可
   #schedule:
   #  - cron: '0 18 * * *'
   workflow_dispatch:

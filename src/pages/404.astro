@@ -1,7 +1,7 @@
 ---
 import Base from '@/layouts/Base.astro';
 import { getPortfolio } from '@/lib/notion';
-import { projectPath, siteRoot } from '@/lib/routes';
+import { projectPath, projectsPath, siteRoot } from '@/lib/routes';
 
 const { profile, projects } = await getPortfolio();
 const suggestions = projects.slice(0, 3);
@@ -17,7 +17,7 @@ const suggestions = projects.slice(0, 3);
 
     <div class="actions">
       <a class="btn btn-primary" href={siteRoot()}>回到首页</a>
-      <a class="btn btn-ghost" href={`${siteRoot()}projects/`}>看看作品集</a>
+      <a class="btn btn-ghost" href={projectsPath()}>看看作品集</a>
       {profile.email && <a class="btn btn-ghost" href={`mailto:${profile.email}`}>发封邮件</a>}
     </div>
 

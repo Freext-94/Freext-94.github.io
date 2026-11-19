@@ -88,7 +88,7 @@ npm run notion:setup -- --check  # 检查 Notion 数据库
 
 ## GitHub Pages 部署
 
-工作流位于 `.github/workflows/deploy.yml`，推送到 `main`、每日定时任务或手动触发时会构建并发布网站。Notion 内容在每次构建时读取，因此 Notion 内容更新后会在下一次部署后显示。
+工作流位于 `.github/workflows/deploy.yml`，推送到 `main` 或手动触发时会构建并发布网站（每日定时任务当前优化阶段暂时关闭）。Notion 内容在每次构建时读取，因此 Notion 内容更新后会在下一次部署后显示。
 
 在 GitHub 仓库设置 **Settings → Pages → Build and deployment**，将 Source 设为 **GitHub Actions**。然后到 **Settings → Secrets and variables → Actions** 添加：
 

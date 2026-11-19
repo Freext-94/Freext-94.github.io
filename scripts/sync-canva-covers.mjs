@@ -111,6 +111,16 @@ async function collectJobs(api) {
       for (const row of articles) {
         const title = plain(row.properties['文章标题']?.title) || row.id;
         add(row.properties['封面图片']?.url, `文章封面 · ${title}`);
+        // 正文里的 Canva 图同样会带过期链接，必须一起截
+        const blocks = await collectPaginatedAPI(api.blocks.children.list, {
+          block_id: row.id,
+          page_size: 100,
+        });
+        for (const block of blocks) {
+          if (block.type !== 'image') continue;
+          const url = block.image?.external?.url ?? block.image?.file?.url;
+          add(url, `文章正文 · ${title}`);
+        }
       }
     } catch (error) {
       console.warn(`[canva] 读取 Articles 失败，跳过：${error.message}`);

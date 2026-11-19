@@ -18,7 +18,7 @@ import {
   toSkill,
   type NotionRow,
 } from './normalize';
-import type { Portfolio, ProjectDetailBlock } from './types';
+import type { Article, Portfolio, ProjectDetailBlock } from './types';
 import { richTextToHtml, type RichTextItem } from './richtext';
 import { SAMPLE_PORTFOLIO } from '@/data/fixtures';
 
@@ -134,6 +134,23 @@ async function withRetry<T>(label: string, run: () => Promise<T>): Promise<T> {
   }
 }
 
+/** Notion 对密集请求会限流，详情页的子块请求控制在 3 个并发 */
+async function forEachWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<void>,
+): Promise<void> {
+  let cursor = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (cursor < items.length) {
+      const index = cursor;
+      cursor += 1;
+      await worker(items[index]);
+    }
+  });
+  await Promise.all(runners);
+}
+
 /** Notion 里的数据源名会直接当区块的英文小标题用，所以取回来要 trim */
 function richTextName(value: unknown): string | undefined {
   if (!Array.isArray(value)) return undefined;
@@ -209,6 +226,43 @@ async function readSource(
 
 const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order;
 
+/** 文章按发布时间倒序；没有日期的按「排序」排在后面 */
+const byPublished = (a: Article, b: Article) => {
+  if (a.publishedOn && b.publishedOn) return b.publishedOn.localeCompare(a.publishedOn);
+  if (a.publishedOn) return -1;
+  if (b.publishedOn) return 1;
+  return byOrder(a, b);
+};
+
+interface DetailItem {
+  id: string;
+  slug?: string;
+  details?: ProjectDetailBlock[];
+}
+
+/**
+ * 给有 Slug 的条目拉正文，项目与文章共用。
+ * 控制 3 个并发，避免一次打太多请求被 Notion 限流。
+ */
+async function loadDetails<T extends DetailItem>(
+  api: NotionClient,
+  rows: NotionRow[],
+  items: T[],
+  pageLabel: (item: T) => string,
+): Promise<void> {
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  await forEachWithConcurrency(
+    items.filter((item) => item.slug?.trim()),
+    3,
+    async (item) => {
+      const row = byId.get(item.id);
+      if (!row) return;
+      const label = pageLabel(item);
+      item.details = await withRetry(label, () => readPageBlocks(api, row.id, label));
+    },
+  );
+}
+
 /**
  * 先按首字母、再按拼音：拉丁开头的分类（AI、Web）排最前并按字母序，
  * 其余按中文拼音。ICU 的 zh collation 会把拉丁整体排在汉字之后，
@@ -229,7 +283,11 @@ function hasTitle(row: NotionRow, property: string): boolean {
 }
 
 interface NotionBlock {
+  id: string;
   type: string;
+  has_children?: boolean;
+  /** 递归时挂上子块，深度上限见 collectBlocks */
+  children?: NotionBlock[];
   [key: string]: unknown;
 }
 
@@ -264,7 +322,31 @@ function plainRichText(items: RichTextItem[] | undefined): string {
  * 这样你在 Notion 里加的粗体、斜体、链接能原样带到页面上——
  * 之前只取 plain_text，正文里的强调格式会被压平。
  */
-function toPageDetails(blocks: NotionBlock[]): ProjectDetailBlock[] {
+/** 记录每个页面里没能渲染的块类型，构建结束统一告警，避免静默丢内容 */
+const unsupportedBlocks = new Map<string, Map<string, number>>();
+
+function noteUnsupported(page: string, type: string) {
+  const types = unsupportedBlocks.get(page) ?? new Map<string, number>();
+  types.set(type, (types.get(type) ?? 0) + 1);
+  unsupportedBlocks.set(page, types);
+}
+
+/** 构建结束时打印一次「哪个页面有几种块没渲染」，没有则静默 */
+export function reportUnsupportedBlocks() {
+  if (unsupportedBlocks.size === 0) return;
+  const lines = [...unsupportedBlocks].map(([page, types]) => {
+    const detail = [...types].map(([type, count]) => `${type} ×${count}`).join('、');
+    return `  - ${page}：${detail}`;
+  });
+  console.warn(`[notion] 以下页面存在未渲染的块：\n${lines.join('\n')}`);
+}
+
+/**
+ * Notion 页面块 → 详情页块。文字走 richTextToHtml，
+ * 这样你在 Notion 里加的粗体、斜体、链接能原样带到页面上——
+ * 之前只取 plain_text，正文里的强调格式会被压平。
+ */
+function toPageDetails(blocks: NotionBlock[], page: string): ProjectDetailBlock[] {
   const details: ProjectDetailBlock[] = [];
   for (const block of blocks) {
     const html = richTextToHtml(blockRichText(block));
@@ -274,10 +356,33 @@ function toPageDetails(blocks: NotionBlock[]): ProjectDetailBlock[] {
         level: Number(block.type.at(-1)) as 1 | 2 | 3,
         html,
       });
-    } else if (block.type === 'paragraph' && html) {
-      details.push({ type: 'paragraph', html });
-    } else if (block.type === 'quote' && html) {
-      details.push({ type: 'quote', html });
+    } else if (block.type === 'paragraph') {
+      if (html) details.push({ type: 'paragraph', html });
+    } else if (block.type === 'quote') {
+      if (html) details.push({ type: 'quote', html });
+    } else if (block.type === 'callout') {
+      // callout 按引用块渲染，图标不单独展示
+      if (html) details.push({ type: 'quote', html });
+      if (block.children?.length) details.push(...toPageDetails(block.children, page));
+    } else if (block.type === 'toggle') {
+      // toggle 折叠标题当段落，子块递归展开
+      if (html) details.push({ type: 'paragraph', html });
+      if (block.children?.length) details.push(...toPageDetails(block.children, page));
+    } else if (block.type === 'table') {
+      const rows = (block.children ?? [])
+        .filter((child) => child.type === 'table_row')
+        .map((child) =>
+          ((child.table_row as { cells?: RichTextItem[][] } | undefined)?.cells ?? []).map((cell) =>
+            richTextToHtml(cell),
+          ),
+        )
+        .filter((row) => row.length > 0);
+      if (rows.length > 0) {
+        const header = Boolean(
+          (block.table as { has_column_header?: boolean } | undefined)?.has_column_header,
+        );
+        details.push({ type: 'table', header, rows });
+      }
     } else if (block.type === 'bulleted_list_item' || block.type === 'numbered_list_item') {
       const ordered = block.type === 'numbered_list_item';
       const previous = details.at(-1);
@@ -303,21 +408,47 @@ function toPageDetails(blocks: NotionBlock[]): ProjectDetailBlock[] {
       }
     } else if (block.type === 'divider') {
       details.push({ type: 'divider' });
+    } else {
+      noteUnsupported(page, block.type);
+      if (block.children?.length) details.push(...toPageDetails(block.children, page));
     }
   }
   return details;
 }
 
-/** 读取一行 Notion 页面的正文块；项目详情将来文章详情共用这一套 */
+const MAX_BLOCK_DEPTH = 3;
+
+/**
+ * 递归拉取子块（toggle / table / callout 都可能带 children）。
+ * 深度上限 3 层，避免页面里套太深时请求数失控。
+ */
+async function collectBlocks(
+  api: NotionClient,
+  blockId: string,
+  depth = 0,
+): Promise<NotionBlock[]> {
+  const blocks = (await collectPaginatedAPI(api.blocks.children.list, {
+    block_id: blockId,
+    page_size: 100,
+  })) as unknown as NotionBlock[];
+
+  if (depth >= MAX_BLOCK_DEPTH) return blocks;
+
+  for (const block of blocks) {
+    if (!block.has_children) continue;
+    block.children = await collectBlocks(api, block.id, depth + 1);
+  }
+  return blocks;
+}
+
+/** 读取一行 Notion 页面的正文块；项目详情与文章详情共用这一套 */
 export async function readPageBlocks(
   api: NotionClient,
   pageId: string,
+  page: string,
 ): Promise<ProjectDetailBlock[]> {
-  const blocks = await collectPaginatedAPI(api.blocks.children.list, {
-    block_id: pageId,
-    page_size: 100,
-  });
-  return toPageDetails(blocks as unknown as NotionBlock[]);
+  const blocks = await collectBlocks(api, pageId);
+  return toPageDetails(blocks, page);
 }
 
 async function load(): Promise<Portfolio> {
@@ -364,13 +495,24 @@ async function load(): Promise<Portfolio> {
       .map((project) => ({ ...project, image: localizeImage(project.image) }))
       .sort(byOrder);
 
-    await Promise.all(
-      projects.map(async (project) => {
-        if (!project.slug) return;
-        const row = srcProjects.rows.find((item) => item.id === project.id);
-        if (row) project.details = await withRetry(project.name, () => readPageBlocks(api, row.id));
-      }),
-    );
+    await loadDetails(api, srcProjects.rows, projects, (project) => `项目 · ${project.name}`);
+
+    const articles = srcArticles.rows
+      .filter((row) => hasTitle(row, PROP.articles.title))
+      .filter((row) => !isHidden(row, PROP.articles.visible))
+      .map(toArticle)
+      .map((article) => ({ ...article, image: localizeImage(article.image) }))
+      .sort(byPublished);
+
+    const missingSlug = articles.filter((article) => !article.slug?.trim());
+    if (missingSlug.length > 0) {
+      console.warn(
+        `[notion] ${missingSlug.length} 篇文章没有 Slug，不会生成详情页：` +
+          missingSlug.map((article) => article.title).join('、'),
+      );
+    }
+    await loadDetails(api, srcArticles.rows, articles, (article) => `文章 · ${article.title}`);
+    reportUnsupportedBlocks();
 
     return {
       profile: toProfile(profileRow),
@@ -387,11 +529,7 @@ async function load(): Promise<Portfolio> {
         .filter((row) => !isHidden(row, PROP.experience.visible))
         .map(toExperience)
         .sort(byOrder),
-      articles: srcArticles.rows
-        .filter((row) => hasTitle(row, PROP.articles.title))
-        .map(toArticle)
-        .map((article) => ({ ...article, image: localizeImage(article.image) }))
-        .sort(byOrder),
+      articles,
       dbNames,
       source: 'notion',
     };

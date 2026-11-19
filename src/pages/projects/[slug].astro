@@ -2,9 +2,18 @@
 import Base from '@/layouts/Base.astro';
 import ProjectBody from '@/components/ProjectBody.astro';
 import { getPortfolio } from '@/lib/notion';
+import { assertUniqueSlugs } from '@/lib/validate';
+import { projectsPath } from '@/lib/routes';
+import { existsSync } from 'node:fs';
 
 export async function getStaticPaths() {
   const { profile, projects } = await getPortfolio();
+  assertUniqueSlugs(
+    projects,
+    'Projects',
+    (project) => project.name,
+    (project) => project.slug,
+  );
   return projects
     .filter((project) => project.slug?.trim())
     .map((project) => ({
@@ -16,12 +25,20 @@ export async function getStaticPaths() {
 const { profile, project } = Astro.props;
 const title = `${project.name} · ${profile.name}的个人主页`;
 const description = project.summary || `${project.name} 项目介绍。`;
-const home = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+// 有专属分享图就用专属的，没有回退首页那张，避免线上出现白卡
+const ogCandidate = `/og/projects/${project.slug?.trim() ?? ''}.png`;
+const ogImage = existsSync(`public${ogCandidate}`) ? ogCandidate : '/og.png';
 ---
 
-<Base profile={profile} title={title} description={description}>
+<Base
+  profile={profile}
+  title={title}
+  description={description}
+  ogImage={ogImage}
+  ogImageAlt={`${project.name} 项目封面`}
+>
   <article class="shell detail">
-    <a class="back" href={`${home}#projects`}>← 全部项目</a>
+    <a class="back" href={projectsPath()}>← 返回作品集</a>
 
     <header class="intro">
       <div class="meta">
@@ -52,7 +69,7 @@ const home = import.meta.env.BASE_URL.replace(/\/?$/, '/');
       )
     }
 
-    <ProjectBody blocks={project.details} projectName={project.name} />
+    <ProjectBody blocks={project.details} contextName={project.name} />
 
     {
       (project.demo || project.repo) && (

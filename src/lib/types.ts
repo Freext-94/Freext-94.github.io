@@ -56,6 +56,7 @@ export type ProjectDetailBlock =
   /** Notion embed：页面里渲染成 iframe，用来嵌自托管的 HTML 架构图 */
   | { type: 'embed'; url: string; caption?: string }
   | { type: 'code'; language?: string; text: string }
+  | { type: 'table'; header: boolean; rows: string[][] }
   | { type: 'divider' };
 
 export interface Skill {
@@ -91,10 +92,12 @@ export interface Article {
   category?: string;
   tags: string[];
   image?: string;
+  /** 有 Slug 才生成详情页 */
+  slug?: string;
   featured: boolean;
-  /** ISO 日期，来自 created_time */
-  publishedAt?: string;
-  status?: string;
+  /** ISO 日期，来自「发布时间」；属性是 created_time 时回退创建时间 */
+  publishedOn?: string;
+  details?: ProjectDetailBlock[];
   order: number;
 }
 

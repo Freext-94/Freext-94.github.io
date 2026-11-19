@@ -14,9 +14,6 @@ const groups = skills.reduce<Map<string, Skill[]>>((acc, skill) => {
   else acc.set(skill.category, [skill]);
   return acc;
 }, new Map());
-
-const avg = (items: Skill[]) =>
-  Math.round(items.reduce((sum, s) => sum + s.level, 0) / items.length);
 ---
 
 <div class="wrap">
@@ -33,7 +30,6 @@ const avg = (items: Skill[]) =>
               </h3>
               {position && <span class="pill pill-brand">{position}</span>}
             </div>
-            <span class="score mono">均值 {avg(items)}</span>
           </header>
 
           <ul class="list">
@@ -111,14 +107,6 @@ const avg = (items: Skill[]) =>
     border-radius: 3px;
     background: var(--brand);
     flex-shrink: 0;
-  }
-
-  .score {
-    font-size: 0.76rem;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    padding-block-start: 0.28rem;
   }
 
   .list {

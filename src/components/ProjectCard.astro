@@ -10,6 +10,7 @@ interface Props {
 
 const { project, wide = false, index = 0 } = Astro.props;
 const detailUrl = projectPath(project.slug);
+const Cover = detailUrl ? 'a' : 'div';
 ---
 
 <article
@@ -17,7 +18,7 @@ const detailUrl = projectPath(project.slug);
   data-reveal
   style={`--i:${index}`}
 >
-  <div class="cover">
+  <Cover class="cover" href={detailUrl} aria-label={detailUrl ? `查看项目详情：${project.name}` : undefined}>
     {
       /* 图床偶发 404 时直接摘掉 img，让底层的渐变补位，不留破图 */
       project.image && (
@@ -38,16 +39,16 @@ const detailUrl = projectPath(project.slug);
       {project.featured && <span class="pill pill-brand">精选</span>}
       {project.status && <span class="badge">{project.status}</span>}
     </div>
-  </div>
+  </Cover>
 
   <div class="body">
     {project.category && <p class="category">{project.category}</p>}
 
-    <h3 class="title">{project.name}</h3>
+    <h3 class="title">
+      {detailUrl ? <a href={detailUrl}>{project.name}</a> : project.name}
+    </h3>
 
     {project.summary && <p class="summary">{project.summary}</p>}
-
-    {detailUrl && <a class="detail-link" href={detailUrl}>查看项目详情 <span aria-hidden="true">→</span></a>}
 
     {
       project.stack.length > 0 && (
@@ -84,12 +85,15 @@ const detailUrl = projectPath(project.slug);
 
 <style>
   .project {
+    position: relative;
     display: grid;
     overflow: hidden;
   }
 
   .cover {
     position: relative;
+    display: block;
+    text-decoration: none;
     aspect-ratio: 16 / 9;
     overflow: hidden;
     background:
@@ -165,23 +169,6 @@ const detailUrl = projectPath(project.slug);
     padding: clamp(1.15rem, 2.5vw, 1.6rem);
   }
 
-  .detail-link {
-    justify-self: start;
-    color: var(--accent-1);
-    font-size: 0.88rem;
-    font-weight: 650;
-    text-decoration: none;
-  }
-
-  .detail-link span {
-    display: inline-block;
-    transition: transform 0.2s var(--ease);
-  }
-
-  .detail-link:hover span {
-    transform: translateX(0.2rem);
-  }
-
   .category {
     font-size: 0.78rem;
     font-weight: 660;
@@ -191,6 +178,16 @@ const detailUrl = projectPath(project.slug);
 
   .title {
     font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+  }
+
+  .title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .title a:hover {
+    color: var(--accent-1);
   }
 
   /* 摘要统一截到三行，否则卡片高度由文字多少决定，一排看过去参差不齐。
@@ -222,6 +219,8 @@ const detailUrl = projectPath(project.slug);
   }
 
   .links a {
+    position: relative;
+    z-index: 2;
     padding: 0.42rem 0.9rem;
     font-size: 0.85rem;
   }

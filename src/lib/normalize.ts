@@ -108,6 +108,11 @@ function read(row: NotionRow, name: string, kind: PropertySpec['kind']): unknown
       const value = prop.created_time;
       return typeof value === 'string' ? value : value?.date;
     }
+    case 'date_or_created':
+      return (
+        prop.date?.start ??
+        (typeof prop.created_time === 'string' ? prop.created_time : prop.created_time?.date)
+      );
   }
 }
 
@@ -247,9 +252,9 @@ export function toArticle(row: NotionRow): Article {
     category: opt(read(row, p.category, 'select')),
     tags: arr(read(row, p.tags, 'multi_select')),
     image,
+    slug: opt(read(row, p.slug, 'text')),
     featured: bool(read(row, p.featured, 'checkbox')),
-    publishedAt: opt(read(row, p.publishedAt, 'created_time')),
-    status: opt(read(row, p.status, 'status')),
+    publishedOn: opt(read(row, p.publishedOn, 'date_or_created')),
     order: num(read(row, p.order, 'number')),
   };
 }

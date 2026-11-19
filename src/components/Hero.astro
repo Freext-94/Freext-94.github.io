@@ -4,17 +4,16 @@ import type { ProfileInfo } from '@/lib/types';
 interface Props {
   profile: ProfileInfo;
   projectCount: number;
-  skillCount: number;
   experienceCount: number;
 }
 
-const { profile, projectCount, skillCount, experienceCount } = Astro.props;
+const { profile, projectCount, experienceCount } = Astro.props;
 const avatar = profile.avatar || `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}avatar.png`;
 
+// 首屏只保留两格：经历与项目，技能数量不进首屏
 const stats = [
-  { value: projectCount, label: '个项目' },
-  { value: skillCount, label: '项技能' },
   { value: experienceCount, label: '段经历' },
+  { value: projectCount, label: '个项目' },
 ];
 ---
 

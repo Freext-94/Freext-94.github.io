@@ -1,0 +1,162 @@
+---
+import Base from '@/layouts/Base.astro';
+import ProjectBody from '@/components/ProjectBody.astro';
+import { getPortfolio } from '@/lib/notion';
+import { assertUniqueSlugs } from '@/lib/validate';
+import { articlesPath, siteRoot } from '@/lib/routes';
+import { existsSync } from 'node:fs';
+
+export async function getStaticPaths() {
+  const { profile, articles } = await getPortfolio();
+  assertUniqueSlugs(
+    articles,
+    'Articles',
+    (article) => article.title,
+    (article) => article.slug,
+  );
+  return articles
+    .filter((article) => article.slug?.trim())
+    .map((article) => ({
+      params: { slug: article.slug!.trim() },
+      props: { profile, article },
+    }));
+}
+
+const { profile, article } = Astro.props;
+const title = `${article.title} · ${profile.name}的个人主页`;
+const description = article.summary || `${article.title}。`;
+const published = article.publishedOn?.slice(0, 10).replaceAll('-', '.');
+const ogCandidate = `/og/articles/${article.slug?.trim() ?? ''}.png`;
+const ogImage = existsSync(`public${ogCandidate}`) ? ogCandidate : '/og.png';
+
+const pageUrl = new URL(Astro.url.pathname, Astro.site).href;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: article.title,
+  description,
+  datePublished: article.publishedOn,
+  dateModified: article.publishedOn,
+  author: { '@type': 'Person', name: profile.name, url: new URL(siteRoot(), Astro.site).href },
+  publisher: { '@type': 'Person', name: profile.name },
+  image: [new URL(ogImage, Astro.site).href],
+  url: pageUrl,
+  mainEntityOfPage: pageUrl,
+  keywords: article.tags.join(','),
+};
+// 转义 <，防止字段里出现 </script> 提前闭合标签
+const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
+---
+
+<Base
+  profile={profile}
+  title={title}
+  description={description}
+  ogImage={ogImage}
+  ogImageAlt={article.title}
+>
+  <article class="shell detail">
+    <a class="back" href={articlesPath()}>← 全部文章</a>
+
+    <header class="intro">
+      <div class="meta">
+        {article.category && <span class="pill pill-brand">{article.category}</span>}
+        {published && <span class="when mono">{published}</span>}
+      </div>
+      <h1>{article.title}</h1>
+      {article.summary && <p class="summary">{article.summary}</p>}
+    </header>
+
+    {
+      article.image && (
+        <div class="cover card">
+          <img
+            src={article.image}
+            alt={`${article.title} 封面`}
+            fetchpriority="high"
+            onerror="this.closest('.cover')?.remove()"
+          />
+        </div>
+      )
+    }
+
+    <ProjectBody blocks={article.details} contextName={article.title} />
+
+    {
+      article.tags.length > 0 && (
+        <ul class="pills tags">
+          {article.tags.map((tag) => <li class="pill">{tag}</li>)}
+        </ul>
+      )
+    }
+  </article>
+</Base>
+
+<script type="application/ld+json" set:html={jsonLdHtml} />
+
+<style>
+  .detail {
+    padding-block: clamp(2rem, 6vw, 5rem);
+  }
+
+  .back {
+    display: inline-block;
+    margin-block-end: clamp(2rem, 5vw, 3.5rem);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--text);
+  }
+
+  .intro {
+    max-inline-size: 54rem;
+  }
+
+  .meta,
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .when {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .intro h1 {
+    margin-block: 1rem 0.75rem;
+    font-size: clamp(2rem, 5.5vw, 3.4rem);
+    line-height: 1.15;
+    letter-spacing: -0.04em;
+  }
+
+  .summary {
+    max-inline-size: 46rem;
+    color: var(--text-muted);
+    font-size: clamp(1.02rem, 2.2vw, 1.18rem);
+  }
+
+  .cover {
+    overflow: hidden;
+    margin-block: clamp(2rem, 5vw, 3.5rem);
+    background: var(--surface);
+  }
+
+  .cover img {
+    inline-size: 100%;
+    max-block-size: 36rem;
+    object-fit: cover;
+  }
+
+  .tags {
+    margin-block-start: 2.5rem;
+    padding: 0;
+    list-style: none;
+  }
+</style>

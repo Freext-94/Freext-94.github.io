@@ -8,7 +8,7 @@ import Timeline from '@/components/Timeline.astro';
 import ArticleList from '@/components/ArticleList.astro';
 import Contact from '@/components/Contact.astro';
 import { getPortfolio } from '@/lib/notion';
-import { siteRoot } from '@/lib/routes';
+import { articlesPath, projectsPath } from '@/lib/routes';
 
 const { profile, projects, skills, experience, articles, dbNames, source } =
   await getPortfolio();
@@ -40,7 +40,7 @@ const jsonLd = {
 const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
 ---
 
-<Base profile={profile} contentSource={source}>
+<Base profile={profile} contentSource={source} ogImage="/og.png">
   {
     /* 未配置 Notion 时只在本地开发提示，线上产物不会带这段话 */
     source === 'sample' && import.meta.env.DEV && (
@@ -56,7 +56,6 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
   <Hero
     profile={profile}
     projectCount={projects.length}
-    skillCount={skills.length}
     experienceCount={experience.length}
   />
 
@@ -108,7 +107,7 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
         {
           hasMoreProjects && (
             <p class="more">
-              <a class="btn btn-ghost" href={`${siteRoot()}projects/`}>
+              <a class="btn btn-ghost" href={projectsPath()}>
                 作品集（共 {projects.length} 个）
                 <span aria-hidden="true">→</span>
               </a>
@@ -149,7 +148,18 @@ const jsonLdHtml = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
         title="我写过的东西"
         description="平时记录的一些思考和复盘。"
       >
-        <ArticleList articles={articles} />
+        <ArticleList articles={articles.slice(0, 3)} />
+
+        {
+          articles.length > 3 && (
+            <p class="more">
+              <a class="btn btn-ghost" href={articlesPath()}>
+                全部文章（共 {articles.length} 篇）
+                <span aria-hidden="true">→</span>
+              </a>
+            </p>
+          )
+        }
       </Section>
     )
   }
