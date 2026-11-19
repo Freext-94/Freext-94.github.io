@@ -64,6 +64,17 @@ Skills 库没有排序字段，技能按熟悉程度降序排列，分类顺序�
 
 封面图片与头像使用 URL 字段。填写可直接访问的图片链接；图片无法加载时，项目卡片会使用渐变背景和标题首字作为占位。
 
+### 项目详情配图
+
+项目详情页的配图定义在 `scripts/figures/project-figures.mjs`，每个项目两张，1600×1000、浅色底，配色取自站点设计令牌。改完定义后重新渲染：
+
+```bash
+npm run figures                    # 全部重渲
+npm run figures -- --only=city     # 只渲 slug 含 city 的项目
+```
+
+产物写入 `public/projects/<slug>/fig-*.webp`。配图以 GitHub Pages 外链插入 Notion（`node scripts/insert-project-figures.mjs --write`），所以顺序是：先推图片、确认线上可访问，再写 Notion。Notion 自己托管的文件链接一小时就会过期，构建时会变成坏图，不要直接把图上传到 Notion。
+
 ## 常用命令
 
 ```bash
@@ -98,6 +109,7 @@ npm run notion:setup -- --check  # 检查 Notion 数据库
 | 字体（思源黑体，自托管） | `src/layouts/Base.astro` 的 `@fontsource-variable/noto-sans-sc` 导入与 `--font-sans` |
 | 站点名称 | `src/layouts/Base.astro` 的 `siteName`，取自 Notion「姓名」，格式为 `<姓名>的个人主页` |
 | 导航链接 | `src/components/Nav.astro` |
+| 项目详情配图 | `scripts/figures/project-figures.mjs` |
 | 本地示例数据 | `src/data/fixtures.ts` |
 | GitHub Pages 工作流 | `.github/workflows/deploy.yml` |
 
