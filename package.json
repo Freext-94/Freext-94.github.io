@@ -8,11 +8,12 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/sync-canva-covers.mjs && astro build",
     "preview": "astro preview",
     "check": "astro check",
     "verify": "astro check && astro build",
-    "notion:setup": "node scripts/setup-notion.mjs"
+    "notion:setup": "node scripts/setup-notion.mjs",
+    "covers": "node scripts/sync-canva-covers.mjs"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-sc": "^5.3.1",
@@ -22,6 +23,8 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
     "@types/node": "^26.6.6",
+    "puppeteer-core": "^25.18.1",
+    "sharp": "^0.35.5",
     "typescript": "^6.0.3"
   }
 }

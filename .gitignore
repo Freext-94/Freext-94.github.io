@@ -7,3 +7,9 @@ dist/
 .DS_Store
 npm-debug.log*
 *.local
+
+# 构建时从 Canva 生成的封面图，不进仓库
+public/covers/
+
+# 构建时从 Canva 生成的封面图，不进仓库
+public/covers/

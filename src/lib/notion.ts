@@ -1,6 +1,8 @@
 import pkg from '@notionhq/client';
 import type { Client as NotionClient } from '@notionhq/client';
 import dns from 'node:dns';
+import { readFileSync } from 'node:fs';
+import { canvaDesignId, isCanvaUrl } from './canva';
 import {
   COLLECTIONS,
   COLLECTION_KEYS,
@@ -148,6 +150,30 @@ interface Source {
 }
 
 /**
+ * Canva 设计链接在构建前由 scripts/sync-canva-covers.mjs 截成站内 webp，
+ * manifest 记录「设计 ID → 本地路径」。这里只做替换：
+ * 其他图床链接、演示地址、GitHub 等 URL 一律原样返回。
+ */
+let coverManifest: Record<string, string> | undefined;
+
+function canvaCovers(): Record<string, string> {
+  if (!coverManifest) {
+    try {
+      coverManifest = JSON.parse(readFileSync('public/covers/manifest.json', 'utf8'));
+    } catch {
+      coverManifest = {};
+    }
+  }
+  return coverManifest;
+}
+
+export function localizeImage(url?: string): string | undefined {
+  if (!url || !isCanvaUrl(url)) return url;
+  const designId = canvaDesignId(url);
+  return (designId && canvaCovers()[designId]) || url;
+}
+
+/**
  * 数据源名跟着 Notion 走：你在库里改名，页面上的英文小标题同步变。
  * retrieve 顺带确认这个 ID 确实是数据源；取不到名字不影响内容，
  * 退回 schema 里配置的名字，因为标题只是装饰，不值得让整站构建失败。
@@ -258,7 +284,7 @@ function toPageDetails(blocks: NotionBlock[]): ProjectDetailBlock[] {
       else details.push({ type: 'list', ordered, items: [html] });
     } else if (block.type === 'image') {
       const url = imageUrl(block);
-      if (url) details.push({ type: 'image', url, caption: html || undefined });
+      if (url) details.push({ type: 'image', url: localizeImage(url) ?? url, caption: html || undefined });
     } else if (block.type === 'embed') {
       // 自托管的 HTML（比如架构图）走 embed 块，页面里用 iframe 渲染
       const url = embedUrl(block);
@@ -329,6 +355,7 @@ async function load(): Promise<Portfolio> {
     const projects = srcProjects.rows
       .filter((row) => hasTitle(row, PROP.projects.title))
       .map(toProject)
+      .map((project) => ({ ...project, image: localizeImage(project.image) }))
       .sort(byOrder);
 
     await Promise.all(
@@ -357,6 +384,7 @@ async function load(): Promise<Portfolio> {
       articles: srcArticles.rows
         .filter((row) => hasTitle(row, PROP.articles.title))
         .map(toArticle)
+        .map((article) => ({ ...article, image: localizeImage(article.image) }))
         .sort(byOrder),
       dbNames,
       source: 'notion',
